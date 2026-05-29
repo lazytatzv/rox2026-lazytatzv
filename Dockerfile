@@ -49,7 +49,7 @@ RUN rosdep update
 
 WORKDIR /root/ros2_ws
 
-COPY ./src ./src
+COPY ./ros2_ws/src ./src
 
 # rosdep install
 RUN source /opt/ros/jazzy/setup.bash && \
@@ -57,10 +57,8 @@ RUN source /opt/ros/jazzy/setup.bash && \
       --from-paths src \
       --ignore-src \
       -r \
-      -y
-
-RUN source /opt/ros/jazzy/setup.bash && \
-    colcon build
+      -y && \
+      colcon build --symlink-install
 
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
     echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
