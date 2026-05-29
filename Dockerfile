@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     python3-vcstool \
     python3-argcomplete \
+    python3-rosdep \
     iputils-ping \
     iproute2 \
     usbutils \
@@ -43,9 +44,25 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
       ccache; \
     fi && rm -rf /var/lib/apt/lists/*
 
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
-    echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
+RUN rosdep init || true
+RUN rosdep update
 
 WORKDIR /root/ros2_ws
+
+COPY ./src ./src
+
+# rosdep install
+RUN source /opt/ros/jazzy/setup.bash && \
+    rosdep install \
+      --from-paths src \
+      --ignore-src \
+      -r \
+      -y
+
+RUN source /opt/ros/jazzy/setup.bash && \
+    colcon build
+
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
+    echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 CMD ["bash"]
