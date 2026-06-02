@@ -18,7 +18,7 @@ jobs:
       - name: Run test
         run: |
           docker compose exec -T ros2_rox2026 \
-          bach -c " 
+          bash -c " 
           source /opt/ros/jazzy/setup.bash && \ 
           cd /root/ros2_ws && \ 
           source install/setup.bash && \
