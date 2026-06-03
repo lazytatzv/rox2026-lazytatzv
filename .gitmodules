@@ -1,0 +1,3 @@
+[submodule "script/nvim_install/nvim_config"]
+	path = script/nvim_install/nvim_config
+	url = git@github.com:Zyodooon/nvim_git.git
