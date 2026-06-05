@@ -13,5 +13,6 @@
     joy_axis_deadman_rotation: 4
     scale_linear_velocity: 1.0
     scale_angular_velocity: 1.0
+    smoothing_factor: 0.3
     topic_joy: "joy"
     topic_cmd_vel: "cmd_vel"

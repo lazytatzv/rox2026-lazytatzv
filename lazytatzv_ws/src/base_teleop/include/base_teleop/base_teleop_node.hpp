@@ -22,10 +22,16 @@ class BaseTeleopNode : public rclcpp::Node {
   // init parameters
   void declare_parameters();
   void cache_parameters();
+  void timer_callback();
 
   // Publishers and subscriptions
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_command_velocity_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr subscription_joystick_;
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  // State
+  geometry_msgs::msg::Twist current_twist_;
+  geometry_msgs::msg::Twist target_twist_;
 
   // Cached parameters (axis indices)
   int axis_forward_backward_ = 1;
@@ -37,6 +43,7 @@ class BaseTeleopNode : public rclcpp::Node {
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
   double scale_angular_velocity_ = 1.0;
+  double smoothing_factor_ = 0.3; // Lower is smoother
 
   // Cached parameters (topics)
   std::string topic_joy_;
