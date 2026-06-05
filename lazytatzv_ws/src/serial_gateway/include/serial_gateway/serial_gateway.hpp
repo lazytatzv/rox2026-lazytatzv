@@ -14,12 +14,17 @@ class SerialGateway : public rclcpp::Node {
 
  private:
   void serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message);
+  void init_serial_port();
+  void start_async_read();
 
   // Boost.Asio components
   std::unique_ptr<boost::asio::io_context> io_context_;
   std::unique_ptr<boost::asio::serial_port> serial_port_;
+  boost::asio::streambuf read_buffer_;
+  std::thread io_thread_;
 
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_frames_;
+  rclcpp::Publisher<robot_interfaces::msg::SerialFrame>::SharedPtr publisher_rx_frames_;
 };
 
 }  // namespace serial_gateway

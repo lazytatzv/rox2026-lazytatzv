@@ -35,9 +35,12 @@ class TestBaseTeleopIntegration(unittest.TestCase):
         msg.buttons = [0] * 10
         
         # Deadman switch simulation (L2/R2)
-        # Based on code: joystick_message->axes[axis_deadman_translation_] < 0.9
-        msg.axes[5] = -1.0 # Pressed
+        # Based on code: std::abs(joystick_message->axes[axis_deadman_translation_]) > 0.5
+        msg.axes[5] = -1.0 # Pressed (DualSense L2/R2 are -1.0 when fully pressed)
         msg.axes[1] = 0.5  # Forward
+        
+        # Also test that it's disabled when 0.0 (initial state)
+        # msg.axes[5] = 0.0 
         
         # Publish and spin
         pub.publish(msg)

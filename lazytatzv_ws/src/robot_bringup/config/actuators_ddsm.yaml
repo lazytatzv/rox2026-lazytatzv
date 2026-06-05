@@ -1,86 +1,41 @@
-# DDSM115 (RS485 Protocol) Actuator Settings
+# DDSM115 (Binary Protocol) Actuator Settings
 /serial_gateway:
   ros__parameters:
-    serial_port: "/dev/ttyUSB1"
+    serial_port: "/dev/ttyUSB0"
     baud_rate: 115200
 
 /wheel_speeds_dispatcher:
   ros__parameters:
-    max_wheel_speed: 330.0 # DDSM is RPM based
-    front_left_topic: "/front_left/desired_velocity"
-    front_right_topic: "/front_right/desired_velocity"
-    rear_left_topic: "/rear_left/desired_velocity"
-    rear_right_topic: "/rear_right/desired_velocity"
+    front_left_topic: "/front_left_motor/velocity_command"
+    front_right_topic: "/front_right_motor/velocity_command"
+    rear_left_topic: "/rear_left_motor/velocity_command"
+    rear_right_topic: "/rear_right/velocity_command"
 
-# Individual Motor Parameters (DDSM)
+# Individual Motor Parameters (DDSM115)
 /front_left_motor:
   ros__parameters:
     motor_id: 1
-    invert_direction: false
+    joint_name: "front_left_wheel_joint"
     topic_tx_queue: "/serial_bus/tx_queue"
-
-/front_left_motor_controller:
-  ros__parameters:
-    use_outer_pid: false # DDSM has decent internal speed loop
-    kp: 1.0
-    ki: 0.0
-    kd: 0.0
-    max_output: 330.0
-    rate_hz: 20.0
-    desired_topic: "/front_left/desired_velocity"
-    measured_topic: "/front_left/measured_velocity"
-    output_topic: "/front_left/target_velocity"
+    topic_rx_queue: "/serial_bus/rx_queue"
 
 /front_right_motor:
   ros__parameters:
     motor_id: 2
-    invert_direction: true
+    joint_name: "front_right_wheel_joint"
     topic_tx_queue: "/serial_bus/tx_queue"
-
-/front_right_motor_controller:
-  ros__parameters:
-    use_outer_pid: false
-    kp: 1.0
-    ki: 0.0
-    kd: 0.0
-    max_output: 330.0
-    rate_hz: 20.0
-    desired_topic: "/front_right/desired_velocity"
-    measured_topic: "/front_right/measured_velocity"
-    output_topic: "/front_right/target_velocity"
+    topic_rx_queue: "/serial_bus/rx_queue"
 
 /rear_left_motor:
   ros__parameters:
     motor_id: 3
-    invert_direction: false
+    joint_name: "rear_left_wheel_joint"
     topic_tx_queue: "/serial_bus/tx_queue"
-
-/rear_left_motor_controller:
-  ros__parameters:
-    use_outer_pid: false
-    kp: 1.0
-    ki: 0.0
-    kd: 0.0
-    max_output: 330.0
-    rate_hz: 20.0
-    desired_topic: "/rear_left/desired_velocity"
-    measured_topic: "/rear_left/measured_velocity"
-    output_topic: "/rear_left/target_velocity"
+    topic_rx_queue: "/serial_bus/rx_queue"
 
 /rear_right_motor:
   ros__parameters:
     motor_id: 4
-    invert_direction: true
+    joint_name: "rear_right_wheel_joint"
     topic_tx_queue: "/serial_bus/tx_queue"
-
-/rear_right_motor_controller:
-  ros__parameters:
-    use_outer_pid: false
-    kp: 1.0
-    ki: 0.0
-    kd: 0.0
-    max_output: 330.0
-    rate_hz: 20.0
-    desired_topic: "/rear_right/desired_velocity"
-    measured_topic: "/rear_right/measured_velocity"
-    output_topic: "/rear_right/target_velocity"
+    topic_rx_queue: "/serial_bus/rx_queue"

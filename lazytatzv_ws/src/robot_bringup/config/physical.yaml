@@ -9,6 +9,9 @@
 
 /kinematics_engine_node:
   ros__parameters:
+    # Actuator Selection: "at", "can", or "ddsm"
+    actuator_type: "at"
+    
     half_length: 0.12
     half_width: 0.10
     wheel_radius: 0.05

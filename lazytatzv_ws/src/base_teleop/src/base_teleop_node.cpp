@@ -114,8 +114,8 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr jo
       axis_forward_backward_, axis_left_right_, axis_yaw_, 
       axis_deadman_translation_, axis_deadman_rotation_}))) 
   {
-    bool is_translation_enabled = joystick_message->axes[axis_deadman_translation_] < 0.9;
-    bool is_rotation_enabled = joystick_message->axes[axis_deadman_rotation_] < 0.9;
+    bool is_translation_enabled = std::abs(joystick_message->axes[axis_deadman_translation_]) > 0.5;
+    bool is_rotation_enabled = std::abs(joystick_message->axes[axis_deadman_rotation_]) > 0.5;
 
     if (is_translation_enabled) {
       twist_command->linear.x = joystick_message->axes[axis_forward_backward_] * 
