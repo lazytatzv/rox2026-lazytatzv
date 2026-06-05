@@ -1,0 +1,108 @@
+# Centralized Parameter Configuration for ROX2026 Robot System
+
+/joystick_driver_node:
+  ros__parameters:
+    deadzone: 0.1
+    autorepeat_rate: 20.0
+
+/base_teleoperation_node:
+  ros__parameters:
+    joy_axis_forward_backward: 1
+    joy_axis_left_right: 0
+    joy_axis_yaw: 2
+    joy_axis_deadman_translation: 5
+    joy_axis_deadman_rotation: 4
+    scale_linear_velocity: 1.0
+    scale_angular_velocity: 1.0
+
+/kinematics_engine_node:
+  ros__parameters:
+    half_length: 0.12
+    half_width: 0.10
+    wheel_radius: 0.05
+
+/wheel_speeds_dispatcher:
+  ros__parameters:
+    max_wheel_speed: 20.0
+    front_left_topic: "/front_left/desired_velocity"
+    front_right_topic: "/front_right/desired_velocity"
+    rear_left_topic: "/rear_left/desired_velocity"
+    rear_right_topic: "/rear_right/desired_velocity"
+
+/at_bus_gateway:
+  ros__parameters:
+    serial_port: "/dev/ttyUSB1"
+    baud_rate: 921600
+
+# Individual Motor Parameters
+/front_left_motor:
+  ros__parameters:
+    motor_id: 0x0C
+    invert_direction: false
+    max_speed_limit_percentage: 50.0
+
+/front_left_motor_controller:
+  ros__parameters:
+    use_outer_pid: true
+    kp: 0.5
+    ki: 0.1
+    kd: 0.0
+    max_output: 1.0
+    rate_hz: 20.0
+    desired_topic: "/front_left/desired_velocity"
+    measured_topic: "/front_left/measured_velocity"
+    output_topic: "/front_left/target_velocity"
+
+/front_right_motor:
+  ros__parameters:
+    motor_id: 0x14
+    invert_direction: true
+    max_speed_limit_percentage: 50.0
+
+/front_right_motor_controller:
+  ros__parameters:
+    use_outer_pid: true
+    kp: 0.5
+    ki: 0.1
+    kd: 0.0
+    max_output: 1.0
+    rate_hz: 20.0
+    desired_topic: "/front_right/desired_velocity"
+    measured_topic: "/front_right/measured_velocity"
+    output_topic: "/front_right/target_velocity"
+
+/rear_left_motor:
+  ros__parameters:
+    motor_id: 0x1C
+    invert_direction: false
+    max_speed_limit_percentage: 50.0
+
+/rear_left_motor_controller:
+  ros__parameters:
+    use_outer_pid: true
+    kp: 0.5
+    ki: 0.1
+    kd: 0.0
+    max_output: 1.0
+    rate_hz: 20.0
+    desired_topic: "/rear_left/desired_velocity"
+    measured_topic: "/rear_left/measured_velocity"
+    output_topic: "/rear_left/target_velocity"
+
+/rear_right_motor:
+  ros__parameters:
+    motor_id: 0x24
+    invert_direction: true
+    max_speed_limit_percentage: 50.0
+
+/rear_right_motor_controller:
+  ros__parameters:
+    use_outer_pid: true
+    kp: 0.5
+    ki: 0.1
+    kd: 0.0
+    max_output: 1.0
+    rate_hz: 20.0
+    desired_topic: "/rear_right/desired_velocity"
+    measured_topic: "/rear_right/measured_velocity"
+    output_topic: "/rear_right/target_velocity"

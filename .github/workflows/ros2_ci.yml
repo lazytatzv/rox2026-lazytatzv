@@ -1,4 +1,4 @@
-name: ros2 build and test
+name: CI
 
 on:
   push:
@@ -7,20 +7,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [jazzy, humble]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Start container
+      - name: Setup ROS 2
+        uses: ros-tooling/setup-ros@v0.2.0
+        with:
+          version: ${{ matrix.ros_distro }}
+      - name: Install colcon
         run: |
-          docker compose up -d
-
-      - name: Run test
+          sudo apt update
+          sudo apt install -y python3-colcon-common-extensions python3-pip
+          pip3 install -U colcon-common-extensions
+      - name: Build
         run: |
-          docker compose exec -T ros2_rox2026 \
-          bash -c " 
-          source /opt/ros/jazzy/setup.bash && \ 
-          cd /root/ros2_ws && \ 
-          source install/setup.bash && \
-          colcon test && \ 
-          colcon test-result --verbose "
+          cd lazytatzv_ws
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          rosdep install --from-paths src --ignore-src -r -y
+          colcon build --symlink-install
+      - name: Run tests
+        run: |
+          cd lazytatzv_ws
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          source install/setup.bash
+          colcon test --event-handlers console_direct+
+          colcon test-result --verbose

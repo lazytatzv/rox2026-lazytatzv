@@ -1,0 +1,22 @@
+# twist_mux configuration for ROX2026
+# Topics are ordered by priority (higher value = higher priority)
+
+topics:
+  - name: "teleop"
+    topic: "cmd_vel_joy"
+    timeout: 0.5
+    priority: 100
+  - name: "navigation"
+    topic: "cmd_vel_nav"
+    timeout: 0.5
+    priority: 10
+  - name: "external"
+    topic: "cmd_vel_ext"
+    timeout: 0.5
+    priority: 5
+
+locks:
+  - name: "e_stop"
+    topic: "stop_lock"
+    timeout: 0.0
+    priority: 255

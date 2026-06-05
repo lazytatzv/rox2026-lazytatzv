@@ -1,0 +1,26 @@
+services:
+  ros2_rox2026:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rox2026_container
+    init: true
+    stdin_open: true
+    tty: true
+    privileged: true # Dangerous, but necessary for convenient hardware access.
+    network_mode: host
+    ipc: host
+
+    environment:
+      ROS_DOMAIN_ID: "0"
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      DEBIAN_FRONTEND: noninteractive
+
+    volumes:
+      - ./lazytatzv_ws:/root/lazytatzv_ws
+
+    devices:
+      - /dev:/dev
+
+    working_dir: /root/lazytatzv_ws
+    command: bash

@@ -17,8 +17,8 @@ __pycache__/
 *.mcap
 rosbag2_*/
 
-#about vscode setting
-.vacode/
+# about vscode setting
+.vscode/
 !.vscode/extensions.json
 !.vscode/settings.json
 
