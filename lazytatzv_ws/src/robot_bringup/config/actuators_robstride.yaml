@@ -1,50 +1,52 @@
-# Robstride (AT Protocol) Actuator Settings
-/serial_gateway:
+# ROX2026 Structured Actuator Settings (Robstride AT)
+
+# Communication Layer
+/communication/serial_gateway:
   ros__parameters:
     serial_port: "/dev/ttyUSB1"
     baud_rate: 921600
 
-/wheel_speeds_dispatcher:
+# Hardware Abstraction Layer (HAL)
+/hal/speed_dispatcher:
   ros__parameters:
-    # Match motor node's private namespace ~/velocity_command
-    front_left_topic: "/front_left_motor/velocity_command"
-    front_right_topic: "/front_right_motor/velocity_command"
-    rear_left_topic: "/rear_left_motor/velocity_command"
-    rear_right_topic: "/rear_right_motor/velocity_command"
+    front_left_topic: "/motors/front_left/velocity_command"
+    front_right_topic: "/motors/front_right/velocity_command"
+    rear_left_topic: "/motors/rear_left/velocity_command"
+    rear_right_topic: "/motors/rear_right/velocity_command"
 
-# Individual Motor Parameters (Robstride)
-/front_left_motor:
+# Low-Level Motor Drivers
+/motors/front_left:
   ros__parameters:
     motor_id: 0x0C
     joint_name: "front_left_wheel_joint"
     invert_direction: false
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/communication/tx_queue"
+    topic_rx_queue: "/communication/rx_queue"
 
-/front_right_motor:
+/motors/front_right:
   ros__parameters:
     motor_id: 0x14
     joint_name: "front_right_wheel_joint"
     invert_direction: true
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/communication/tx_queue"
+    topic_rx_queue: "/communication/rx_queue"
 
-/rear_left_motor:
+/motors/rear_left:
   ros__parameters:
     motor_id: 0x1C
     joint_name: "rear_left_wheel_joint"
     invert_direction: false
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/communication/tx_queue"
+    topic_rx_queue: "/communication/rx_queue"
 
-/rear_right_motor:
+/motors/rear_right:
   ros__parameters:
     motor_id: 0x24
     joint_name: "rear_right_wheel_joint"
     invert_direction: true
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/communication/tx_queue"
+    topic_rx_queue: "/communication/rx_queue"

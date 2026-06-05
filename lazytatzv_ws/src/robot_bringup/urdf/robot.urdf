@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot name="lazytatzv_robot">
+
+  <!-- Base Link -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.3 0.2 0.05"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Footprint -->
+  <link name="base_footprint"/>
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Wheels (Simplified as cylinders) -->
+  <!-- Joint names must match what we set in actuators_robstride.yaml -->
+  
+  <link name="front_left_wheel">
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"><color rgba="0 0 0 1"/></material></visual>
+  </link>
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="front_left_wheel"/>
+    <origin xyz="0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="front_right_wheel">
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"><color rgba="0 0 0 1"/></material></visual>
+  </link>
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="front_right_wheel"/>
+    <origin xyz="0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="rear_left_wheel">
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"><color rgba="0 0 0 1"/></material></visual>
+  </link>
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="rear_left_wheel"/>
+    <origin xyz="-0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="rear_right_wheel">
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"><color rgba="0 0 0 1"/></material></visual>
+  </link>
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="rear_right_wheel"/>
+    <origin xyz="-0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+  </joint>
+
+</robot>

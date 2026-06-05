@@ -15,12 +15,19 @@ services:
       ROS_DOMAIN_ID: "0"
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       DEBIAN_FRONTEND: noninteractive
+      # GUI Support
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
 
     volumes:
       - ./lazytatzv_ws:/root/lazytatzv_ws
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:rw
 
     devices:
       - /dev:/dev
+      - /dev/dri:/dev/dri # GPU acceleration for Intel/AMD
 
+    shm_size: '2gb' # Increase shared memory for Foxglove/RViz
     working_dir: /root/lazytatzv_ws
     command: bash
