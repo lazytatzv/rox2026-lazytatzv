@@ -78,3 +78,18 @@ ros2 topic pub /test_motor/target_velocity std_msgs/msg/Float64 "{data: 0.5}"
 ```bash
 ros2 param set /test_motor_controller kp 0.8
 ```
+
+#### インタラクティブ・テストツール
+
+より高度なテスト（ステップ応答、サイン波など）を簡単に行うための専用ツールを用意しています。
+
+```bash
+# コンテナ内の lazytatzv_ws ディレクトリで実行
+./motor_test_tool.py
+```
+
+このツールでは以下の操作が可能です：
+- **数値入力**: 指定した速度を継続して送信。
+- **step**: ステップ応答テスト（指定秒数だけ回転して停止）。
+- **sine**: サイン波送信（PIDの追従性確認などに便利）。
+- **s**: 非常停止（速度 0.0 を送信）。
