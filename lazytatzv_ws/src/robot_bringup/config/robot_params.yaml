@@ -14,12 +14,16 @@
     joy_axis_deadman_rotation: 4
     scale_linear_velocity: 1.0
     scale_angular_velocity: 1.0
+    topic_joy: "joy"
+    topic_cmd_vel: "cmd_vel"
 
 /kinematics_engine_node:
   ros__parameters:
     half_length: 0.12
     half_width: 0.10
     wheel_radius: 0.05
+    topic_cmd_vel: "cmd_vel"
+    topic_wheel_speeds: "wheel_speeds"
 
 /wheel_speeds_dispatcher:
   ros__parameters:
@@ -40,6 +44,7 @@
     motor_id: 0x0C
     invert_direction: false
     max_speed_limit_percentage: 50.0
+    topic_tx_queue: "/at_bus/tx_queue"
 
 /front_left_motor_controller:
   ros__parameters:
@@ -58,6 +63,7 @@
     motor_id: 0x14
     invert_direction: true
     max_speed_limit_percentage: 50.0
+    topic_tx_queue: "/at_bus/tx_queue"
 
 /front_right_motor_controller:
   ros__parameters:
@@ -76,6 +82,7 @@
     motor_id: 0x1C
     invert_direction: false
     max_speed_limit_percentage: 50.0
+    topic_tx_queue: "/at_bus/tx_queue"
 
 /rear_left_motor_controller:
   ros__parameters:
@@ -94,6 +101,7 @@
     motor_id: 0x24
     invert_direction: true
     max_speed_limit_percentage: 50.0
+    topic_tx_queue: "/at_bus/tx_queue"
 
 /rear_right_motor_controller:
   ros__parameters:

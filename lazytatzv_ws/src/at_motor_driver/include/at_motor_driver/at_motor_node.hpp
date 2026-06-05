@@ -21,6 +21,9 @@ class AtMotorNode : public rclcpp::Node {
   uint8_t motor_id_;
   bool invert_direction_;
   int max_at_command_delta_;
+
+  std::string topic_tx_queue_;
+  std::string topic_target_velocity_;
   
   rclcpp::Publisher<robot_interfaces::msg::AtFrame>::SharedPtr publisher_at_frames_;
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr subscription_velocity_;

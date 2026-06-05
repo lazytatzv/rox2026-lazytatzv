@@ -37,6 +37,10 @@ class BaseTeleopNode : public rclcpp::Node {
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
   double scale_angular_velocity_ = 1.0;
+
+  // Cached parameters (topics)
+  std::string topic_joy_;
+  std::string topic_cmd_vel_;
 };
 
 }  // namespace base_teleop

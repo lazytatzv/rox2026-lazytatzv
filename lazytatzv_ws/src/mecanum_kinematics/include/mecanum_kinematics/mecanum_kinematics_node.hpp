@@ -25,6 +25,10 @@ class MecanumKinematicsNode : public rclcpp::Node {
   double half_length_;
   double half_width_;
   double wheel_radius_;
+
+  std::string topic_cmd_vel_;
+  std::string topic_wheel_speeds_;
+
   rclcpp::Publisher<robot_interfaces::msg::WheelSpeeds>::SharedPtr publisher_wheel_speeds_;
 
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_command_velocity_;

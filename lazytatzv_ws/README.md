@@ -45,3 +45,36 @@ A GitHub Actions workflow is included to run `colcon build` and `colcon test` on
 ```bash
 ros2 launch robot_bringup system_pro.launch.py
 ```
+
+### 個別モーターテスト (デバッグ・調整用)
+
+「とりあえず手元にあるモーターを動かしたい」「PIDの調整をしたい」という場合に便利な、個別テスト用 launch です。
+
+```bash
+# 基本起動 (ID:12(0x0C), Port:/dev/ttyUSB1)
+ros2 launch robot_bringup motor_test.launch.py
+
+# IDとポートを指定して起動 (IDは10進数で指定)
+ros2 launch robot_bringup motor_test.launch.py id:=20 port:=/dev/ttyUSB0
+
+# PID制御をオフにして生値を送信する場合
+ros2 launch robot_bringup motor_test.launch.py use_pid:=false
+```
+
+#### テストコマンド例：
+起動後、別のターミナルから以下のように指令を送れます。
+
+**PIDありの場合:**
+```bash
+ros2 topic pub /test_motor/desired_velocity std_msgs/msg/Float64 "{data: 1.0}"
+```
+
+**PIDなしの場合:**
+```bash
+ros2 topic pub /test_motor/target_velocity std_msgs/msg/Float64 "{data: 0.5}"
+```
+
+**パラメータの動的変更 (PID調整など):**
+```bash
+ros2 param set /test_motor_controller kp 0.8
+```

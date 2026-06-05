@@ -16,12 +16,14 @@ MecanumKinematicsNode::MecanumKinematicsNode(const rclcpp::NodeOptions & options
   half_length_ = this->get_parameter("half_length").as_double();
   half_width_ = this->get_parameter("half_width").as_double();
   wheel_radius_ = this->get_parameter("wheel_radius").as_double();
+  topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
+  topic_wheel_speeds_ = this->get_parameter("topic_wheel_speeds").as_string();
 
   publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
-    "wheel_speeds", rclcpp::SystemDefaultsQoS());
+    topic_wheel_speeds_, rclcpp::SystemDefaultsQoS());
 
   subscription_command_velocity_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "cmd_vel",
+    topic_cmd_vel_,
     rclcpp::SystemDefaultsQoS(),
     std::bind(&MecanumKinematicsNode::command_velocity_callback, this, std::placeholders::_1));
 
@@ -30,10 +32,9 @@ MecanumKinematicsNode::MecanumKinematicsNode(const rclcpp::NodeOptions & options
 
   RCLCPP_INFO(
     this->get_logger(),
-    "MecanumKinematicsNode started: half_length=%.3f half_width=%.3f wheel_radius=%.3f",
-    half_length_,
-    half_width_,
-    wheel_radius_);
+    "MecanumKinematicsNode started: cmd_vel='%s' wheel_speeds='%s'",
+    topic_cmd_vel_.c_str(),
+    topic_wheel_speeds_.c_str());
 }
 
 void MecanumKinematicsNode::declare_parameters()
@@ -41,6 +42,8 @@ void MecanumKinematicsNode::declare_parameters()
   this->declare_parameter("half_length", 0.12);
   this->declare_parameter("half_width", 0.10);
   this->declare_parameter("wheel_radius", 0.05);
+  this->declare_parameter("topic_cmd_vel", "cmd_vel");
+  this->declare_parameter("topic_wheel_speeds", "wheel_speeds");
 }
 
 void MecanumKinematicsNode::command_velocity_callback(
@@ -74,6 +77,8 @@ rcl_interfaces::msg::SetParametersResult MecanumKinematicsNode::on_parameter_eve
   result.successful = true;
   result.reason = "ok";
 
+  bool recreate_required = false;
+
   for (const auto & param : params) {
     if (param.get_name() == "half_length") {
       half_length_ = param.as_double();
@@ -87,15 +92,29 @@ rcl_interfaces::msg::SetParametersResult MecanumKinematicsNode::on_parameter_eve
         return result;
       }
       wheel_radius_ = radius;
+    } else if (param.get_name() == "topic_cmd_vel" || param.get_name() == "topic_wheel_speeds") {
+      recreate_required = true;
     }
   }
 
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Updated params: half_length=%.3f half_width=%.3f wheel_radius=%.3f",
-    half_length_,
-    half_width_,
-    wheel_radius_);
+  if (recreate_required) {
+    topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
+    topic_wheel_speeds_ = this->get_parameter("topic_wheel_speeds").as_string();
+
+    publisher_wheel_speeds_.reset();
+    subscription_command_velocity_.reset();
+
+    publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
+      topic_wheel_speeds_, rclcpp::SystemDefaultsQoS());
+
+    subscription_command_velocity_ = this->create_subscription<geometry_msgs::msg::Twist>(
+      topic_cmd_vel_,
+      rclcpp::SystemDefaultsQoS(),
+      std::bind(&MecanumKinematicsNode::command_velocity_callback, this, std::placeholders::_1));
+    
+    RCLCPP_INFO(this->get_logger(), "Topics updated: cmd_vel='%s' wheel_speeds='%s'", 
+      topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str());
+  }
 
   return result;
 }

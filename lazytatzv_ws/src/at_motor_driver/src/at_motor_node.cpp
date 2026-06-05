@@ -11,17 +11,21 @@ AtMotorNode::AtMotorNode(const rclcpp::NodeOptions& options)
   this->declare_parameter("motor_id", 0x0C);
   this->declare_parameter("invert_direction", false);
   this->declare_parameter("max_speed_limit_percentage", 50.0);
+  this->declare_parameter("topic_tx_queue", "/at_bus/tx_queue");
+  this->declare_parameter("topic_target_velocity", "~/target_velocity");
 
   motor_id_ = static_cast<uint8_t>(this->get_parameter("motor_id").as_int());
   invert_direction_ = this->get_parameter("invert_direction").as_bool();
   double max_speed_percentage = this->get_parameter("max_speed_limit_percentage").as_double();
+  topic_tx_queue_ = this->get_parameter("topic_tx_queue").as_string();
+  topic_target_velocity_ = this->get_parameter("topic_target_velocity").as_string();
   
   max_at_command_delta_ = static_cast<int>(NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
 
-  publisher_at_frames_ = this->create_publisher<robot_interfaces::msg::AtFrame>("/at_bus/tx_queue", 10);
+  publisher_at_frames_ = this->create_publisher<robot_interfaces::msg::AtFrame>(topic_tx_queue_, 10);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64>(
-    "~/target_velocity", 10, std::bind(&AtMotorNode::velocity_callback, this, std::placeholders::_1));
+    topic_target_velocity_, 10, std::bind(&AtMotorNode::velocity_callback, this, std::placeholders::_1));
 
   // Sending enable command on startup
   enable_timer_ = this->create_wall_timer(

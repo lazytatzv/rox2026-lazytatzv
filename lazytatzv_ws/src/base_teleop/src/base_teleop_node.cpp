@@ -24,17 +24,18 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   // Publisher with SystemDefaultsQoS for chat-like semantics
   rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
-  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", qos);
+  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::Twist>(topic_cmd_vel_, qos);
   
   // Subscription with SystemDefaultsQoS
   subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
-    "joy", qos, std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
+    topic_joy_, qos, std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
 
   // Register parameter callback for runtime updates
   this->add_on_set_parameters_callback(
       std::bind(&BaseTeleopNode::on_set_parameters_callback, this, std::placeholders::_1));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized");
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized: joy='%s' cmd_vel='%s'", 
+    topic_joy_.c_str(), topic_cmd_vel_.c_str());
 }
 
 void BaseTeleopNode::declare_parameters() {
@@ -45,6 +46,8 @@ void BaseTeleopNode::declare_parameters() {
   this->declare_parameter("joy_axis_deadman_rotation", 4);
   this->declare_parameter("scale_linear_velocity", 1.0);
   this->declare_parameter("scale_angular_velocity", 1.0);
+  this->declare_parameter("topic_joy", "joy");
+  this->declare_parameter("topic_cmd_vel", "cmd_vel");
 }
 
 void BaseTeleopNode::cache_parameters() {
@@ -55,6 +58,8 @@ void BaseTeleopNode::cache_parameters() {
   axis_deadman_rotation_ = this->get_parameter("joy_axis_deadman_rotation").as_int();
   scale_linear_velocity_ = this->get_parameter("scale_linear_velocity").as_double();
   scale_angular_velocity_ = this->get_parameter("scale_angular_velocity").as_double();
+  topic_joy_ = this->get_parameter("topic_joy").as_string();
+  topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
 }
 
 rcl_interfaces::msg::SetParametersResult BaseTeleopNode::on_set_parameters_callback(
@@ -62,33 +67,39 @@ rcl_interfaces::msg::SetParametersResult BaseTeleopNode::on_set_parameters_callb
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
 
+  bool recreate_required = false;
+
   for (const auto& param : parameters) {
-    if (param.get_name() == "joy_axis_forward_backward" ||
-        param.get_name() == "joy_axis_left_right" ||
-        param.get_name() == "joy_axis_yaw" ||
-        param.get_name() == "joy_axis_deadman_translation" ||
-        param.get_name() == "joy_axis_deadman_rotation") {
-      // Validate axis index >= 0
+    const auto& name = param.get_name();
+    if (name == "joy_axis_forward_backward" ||
+        name == "joy_axis_left_right" ||
+        name == "joy_axis_yaw" ||
+        name == "joy_axis_deadman_translation" ||
+        name == "joy_axis_deadman_rotation") {
       if (param.as_int() < 0) {
         result.successful = false;
         result.reason = "Axis index must be >= 0";
         return result;
       }
-    } else if (param.get_name() == "scale_linear_velocity" ||
-               param.get_name() == "scale_angular_velocity") {
-      // Scale factors can be any value (including negative for reversing)
-      // but warn if very large
-      if (std::abs(param.as_double()) > 10.0) {
-        RCLCPP_WARN(this->get_logger(), 
-            "Parameter %s has large scale value: %f", 
-            param.get_name().c_str(), param.as_double());
-      }
+    } else if (name == "topic_joy" || name == "topic_cmd_vel") {
+      recreate_required = true;
     }
   }
 
-  // Cache all parameters if successful
   if (result.successful) {
     cache_parameters();
+    if (recreate_required) {
+      publisher_command_velocity_.reset();
+      subscription_joystick_.reset();
+
+      rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
+      publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::Twist>(topic_cmd_vel_, qos);
+      subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
+        topic_joy_, qos, std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
+      
+      RCLCPP_INFO(this->get_logger(), "Topics updated: joy='%s' cmd_vel='%s'", 
+        topic_joy_.c_str(), topic_cmd_vel_.c_str());
+    }
     RCLCPP_INFO(this->get_logger(), "Parameters updated successfully");
   }
   return result;
