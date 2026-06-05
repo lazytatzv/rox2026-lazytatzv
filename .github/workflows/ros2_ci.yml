@@ -1,37 +1,49 @@
-name: CI
+name: ROS 2 CI
 
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  ros_build_test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         ros_distro: [jazzy, humble]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@v0.2.0
+        uses: ros-tooling/setup-ros@v0.7
         with:
-          version: ${{ matrix.ros_distro }}
-      - name: Install colcon
-        run: |
-          sudo apt update
-          sudo apt install -y python3-colcon-common-extensions python3-pip
-          pip3 install -U colcon-common-extensions
-      - name: Build
-        run: |
-          cd lazytatzv_ws
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          rosdep install --from-paths src --ignore-src -r -y
-          colcon build --symlink-install
-      - name: Run tests
-        run: |
-          cd lazytatzv_ws
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          source install/setup.bash
-          colcon test --event-handlers console_direct+
-          colcon test-result --verbose
+          required-ros-distributions: ${{ matrix.ros_distro }}
+
+      - name: Build and Test
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name: |
+            at_motor_driver
+            base_teleop
+            mecanum_kinematics
+            robot_bringup
+            robot_interfaces
+          target-ros2-distro: ${{ matrix.ros_distro }}
+          source-ros2-distro: ${{ matrix.ros_distro }}
+          vcs-repo-file-url: ""
+          # Path to the workspace source
+          colcon-defaults: |
+            {
+              "build": {
+                "base-paths": ["lazytatzv_ws"]
+              },
+              "test": {
+                "base-paths": ["lazytatzv_ws"]
+              }
+            }
+          # Use the cache to speed up subsequent builds
+          colcon-mixin-name: release
+          import-token: ${{ secrets.GITHUB_TOKEN }}
