@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Paths
     package_bringup_share_directory = get_package_share_directory('robot_bringup')
-    robot_parameters_path = os.path.join(package_bringup_share_directory, 'config', 'robot_params.yaml')
+    actuator_params_path = os.path.join(package_bringup_share_directory, 'config', 'actuators.yaml')
 
     # Arguments
     port_arg = DeclareLaunchArgument('port', default_value='/dev/ttyUSB1', description='Serial port')
@@ -30,7 +30,7 @@ def generate_launch_description():
         executable='at_bus_gateway_node',
         name='at_bus_gateway_test',
         parameters=[
-            robot_parameters_path,
+            actuator_params_path,
             {'serial_port': port}
         ],
         output='screen'
@@ -42,7 +42,7 @@ def generate_launch_description():
         executable='at_motor_node', 
         name=[motor_name, '_driver'],
         parameters=[
-            robot_parameters_path,
+            actuator_params_path,
             {
                 # Note: AtMotorNode expects an int for motor_id. 
                 # Launch doesn't easily convert hex string to int in substitution,
@@ -63,7 +63,7 @@ def generate_launch_description():
         name=[motor_name, '_controller'],
         condition=IfCondition(use_pid),
         parameters=[
-            robot_parameters_path,
+            actuator_params_path,
             {
                 'desired_topic': [motor_name, '/desired_velocity'],
                 'output_topic': [motor_name, '/target_velocity']

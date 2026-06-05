@@ -16,7 +16,11 @@ def generate_launch_description():
     # パス取得
     package_bringup_share_directory = get_package_share_directory('robot_bringup')
     twist_mux_configuration_path = os.path.join(package_bringup_share_directory, 'config', 'twist_mux.yaml')
-    robot_parameters_configuration_path = os.path.join(package_bringup_share_directory, 'config', 'robot_params.yaml')
+    
+    # Split YAML configurations
+    physical_params_path = os.path.join(package_bringup_share_directory, 'config', 'physical.yaml')
+    teleop_params_path = os.path.join(package_bringup_share_directory, 'config', 'teleop.yaml')
+    actuator_params_path = os.path.join(package_bringup_share_directory, 'config', 'actuators.yaml')
 
     container = ComposableNodeContainer(
         name='robot_system_container',
@@ -29,14 +33,14 @@ def generate_launch_description():
                 package='joy',
                 plugin='joy::JoyNode',
                 name='joystick_driver_node',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[teleop_params_path],
             ),
             # 2. Base Teleoperation Node
             ComposableNode(
                 package='base_teleop',
                 plugin='base_teleop::BaseTeleopNode',
                 name='base_teleoperation_node',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[teleop_params_path],
                 remappings=[('cmd_vel', 'cmd_vel_joy')],
             ),
             # 3. Twist Multiplexer
@@ -52,13 +56,13 @@ def generate_launch_description():
                 package='mecanum_kinematics',
                 plugin='mecanum_kinematics::MecanumKinematicsNode',
                 name='kinematics_engine_node',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[physical_params_path],
             ),
             ComposableNode(
                 package='mecanum_kinematics',
                 plugin='mecanum_kinematics::WheelSpeedsDispatcher',
                 name='wheel_speeds_dispatcher',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
             
             # --- Distributed Actuator Layer ---
@@ -68,7 +72,7 @@ def generate_launch_description():
                 package='at_motor_driver',
                 plugin='at_motor_driver::AtBusGateway',
                 name='at_bus_gateway',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
             
             # 6. Front Left Motor
@@ -76,56 +80,56 @@ def generate_launch_description():
                 package='at_motor_driver',
                 plugin='at_motor_driver::AtMotorNode',
                 name='front_left_motor',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_left/target_velocity')],
             ),
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::MotorController',
                 name='front_left_motor_controller',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
             # 7. Front Right Motor
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::AtMotorNode',
                 name='front_right_motor',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_right/target_velocity')],
             ),
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::MotorController',
                 name='front_right_motor_controller',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
             # 8. Rear Left Motor
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::AtMotorNode',
                 name='rear_left_motor',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_left/target_velocity')],
             ),
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::MotorController',
                 name='rear_left_motor_controller',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
             # 9. Rear Right Motor
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::AtMotorNode',
                 name='rear_right_motor',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_right/target_velocity')],
             ),
             ComposableNode(
                 package='at_motor_driver',
                 plugin='at_motor_driver::MotorController',
                 name='rear_right_motor_controller',
-                parameters=[robot_parameters_configuration_path],
+                parameters=[actuator_params_path],
             ),
         ],
         output='screen',

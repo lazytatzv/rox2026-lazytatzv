@@ -1,0 +1,17 @@
+# Teleoperation and Input settings
+/joystick_driver_node:
+  ros__parameters:
+    deadzone: 0.1
+    autorepeat_rate: 20.0
+
+/base_teleoperation_node:
+  ros__parameters:
+    joy_axis_forward_backward: 1
+    joy_axis_left_right: 0
+    joy_axis_yaw: 2
+    joy_axis_deadman_translation: 5
+    joy_axis_deadman_rotation: 4
+    scale_linear_velocity: 1.0
+    scale_angular_velocity: 1.0
+    topic_joy: "joy"
+    topic_cmd_vel: "cmd_vel"
