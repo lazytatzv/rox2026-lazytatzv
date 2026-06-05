@@ -7,6 +7,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(ament_lint_auto REQUIRED)
 
 ament_lint_auto_find_test_dependencies()
@@ -18,11 +19,15 @@ add_library(at_bus_gateway_component SHARED
 target_include_directories(at_bus_gateway_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${Boost_INCLUDE_DIRS}
 )
 ament_target_dependencies(at_bus_gateway_component
   rclcpp
   rclcpp_components
   robot_interfaces
+)
+target_link_libraries(at_bus_gateway_component
+  ${Boost_LIBRARIES}
 )
 
 rclcpp_components_register_node(at_bus_gateway_component
