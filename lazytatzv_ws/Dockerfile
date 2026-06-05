@@ -47,14 +47,10 @@ RUN apt-get update && \
     rosdep install --from-paths src --ignore-src -y -r && \
     rm -rf /var/lib/apt/lists/*
 
-# Build the workspace
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-
 # Enhanced shell environment for developers
 RUN printf "%s\n" \
     "source /opt/ros/${ROS_DISTRO}/setup.bash" \
-    "source $WORKSPACE/install/setup.bash" \
+    "if [ -f $WORKSPACE/install/setup.bash ]; then source $WORKSPACE/install/setup.bash; fi" \
     "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" \
     >> /root/.bashrc
 

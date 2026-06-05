@@ -1,4 +1,4 @@
-name: ROS 2 CI
+name: ROS 2 CI (Docker)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  ros_build_test:
+  docker_build_test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -17,33 +17,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: ${{ matrix.ros_distro }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and Test
-        uses: ros-tooling/action-ros-ci@v0.3
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
         with:
-          package-name: |
-            at_motor_driver
-            base_teleop
-            mecanum_kinematics
-            robot_bringup
-            robot_interfaces
-          target-ros2-distro: ${{ matrix.ros_distro }}
-          source-ros2-distro: ${{ matrix.ros_distro }}
-          vcs-repo-file-url: ""
-          # Path to the workspace source
-          colcon-defaults: |
-            {
-              "build": {
-                "base-paths": ["lazytatzv_ws"]
-              },
-              "test": {
-                "base-paths": ["lazytatzv_ws"]
-              }
-            }
-          # Use the cache to speed up subsequent builds
-          colcon-mixin-name: release
-          import-token: ${{ secrets.GITHUB_TOKEN }}
+          context: ./lazytatzv_ws
+          file: ./lazytatzv_ws/Dockerfile
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+          load: true
+          tags: lazytatzv:test-${{ matrix.ros_distro }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Tests in Docker
+        run: |
+          docker run --rm lazytatzv:test-${{ matrix.ros_distro }} bash -c "
+            source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
+            colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+            source install/setup.bash && \
+            colcon test --event-handlers console_direct+ && \
+            colcon test-result --verbose
+          "

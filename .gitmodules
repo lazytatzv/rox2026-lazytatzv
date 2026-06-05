@@ -1,3 +1,0 @@
-[submodule "ros2_ws/src/can_driver"]
-	path = ros2_ws/src/can_driver
-	url = git@github.com:rodep-soft/el05_usb_can_driver.git
