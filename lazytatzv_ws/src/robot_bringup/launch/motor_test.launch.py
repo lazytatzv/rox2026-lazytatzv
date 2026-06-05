@@ -32,19 +32,17 @@ def generate_launch_description():
         "'", os.path.join(package_bringup_share_directory, 'config', 'actuators_'), "' + '", motor_type, "' + '.yaml'"
     ])
 
-    # 動的なプラグイン名設定
-    motor_plugin = PythonExpression([
-        "'motor_driver::RobstrideMotorNode' if '", motor_type, "' == 'robstride' else 'motor_driver::DdsmMotorNode'"
-    ])
-    
-    # ノード実行ファイル名（CMakeLists.txt の EXECUTABLE 指定に合わせる）
+    # 動的な設定
     motor_exe = PythonExpression([
-        "'robstride_motor_node' if '", motor_type, "' == 'robstride' else 'ddsm_motor_node'"
+        "'robstride_motor_node' if '", motor_type, "' == 'robstride' else 'ddsm115_ros2_driver_node'"
+    ])
+    motor_pkg = PythonExpression([
+        "'robstride_driver' if '", motor_type, "' == 'robstride' else 'ddsm115_ros2_driver'"
     ])
 
     # 1. Gateway
     gateway_node = Node(
-        package='motor_driver',
+        package='serial_gateway',
         executable='serial_gateway_node',
         name='serial_gateway_test',
         parameters=[
@@ -56,7 +54,7 @@ def generate_launch_description():
 
     # 2. Motor Node
     motor_node = Node(
-        package='motor_driver',
+        package=motor_pkg,
         executable=motor_exe, 
         name=[motor_name, '_driver'],
         parameters=[
@@ -69,9 +67,9 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 3. Motor Controller (Optional)
+    # 3. Motor Controller
     controller_node = Node(
-        package='motor_driver',
+        package='motor_controller',
         executable='motor_controller_node',
         name=[motor_name, '_controller'],
         condition=IfCondition(use_pid),

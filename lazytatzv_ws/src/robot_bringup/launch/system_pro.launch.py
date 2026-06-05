@@ -8,11 +8,11 @@ from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     """
-    真・最強構成 (Vendor-Neutral版): 
-    - 1ノード = 1モーターの完全分散設計
-    - シリアルゲートウェイによる一元管理
-    - モータータイプ（robstride/ddsm）を引数で即座に切り替え可能
-    - YAMLによる全ノード集中パラメータ管理
+    真・最強構成 (Vendor-Neutral / Micro-Package版): 
+    - 独立したパッケージ構成により、再利用性を極限まで高めた設計。
+    - 1ノード = 1モーターの完全分散設計。
+    - シリアルゲートウェイによる一元管理。
+    - モータータイプ（robstride/ddsm）を引数で即座に切り替え可能。
     """
     
     # 引数定義
@@ -34,9 +34,12 @@ def generate_launch_description():
         "'", os.path.join(package_bringup_share_directory, 'config', 'actuators_'), "' + '", motor_type, "' + '.yaml'"
     ])
 
-    # 動的なプラグイン名設定
+    # 動的なプラグイン名とパッケージ名設定
     motor_plugin = PythonExpression([
-        "'motor_driver::RobstrideMotorNode' if '", motor_type, "' == 'robstride' else 'motor_driver::DdsmMotorNode'"
+        "'robstride_driver::RobstrideMotorNode' if '", motor_type, "' == 'robstride' else 'ddsm115_ros2_driver::Ddsm115DriverNode'"
+    ])
+    motor_pkg = PythonExpression([
+        "'robstride_driver' if '", motor_type, "' == 'robstride' else 'ddsm115_ros2_driver'"
     ])
 
     container = ComposableNodeContainer(
@@ -84,67 +87,67 @@ def generate_launch_description():
             
             # --- Distributed Actuator Layer ---
             
-            # 5. Serial Gateway
+            # 5. Serial Gateway (Independent Package)
             ComposableNode(
-                package='motor_driver',
-                plugin='motor_driver::SerialGateway',
+                package='serial_gateway',
+                plugin='serial_gateway::SerialGateway',
                 name='serial_gateway',
                 parameters=[actuator_params_path],
             ),
             
             # 6. Front Left Motor
             ComposableNode(
-                package='motor_driver',
+                package=motor_pkg,
                 plugin=motor_plugin,
                 name='front_left_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_left/target_velocity')],
             ),
             ComposableNode(
-                package='motor_driver',
-                plugin='motor_driver::MotorController',
+                package='motor_controller',
+                plugin='motor_controller::MotorController',
                 name='front_left_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 7. Front Right Motor
             ComposableNode(
-                package='motor_driver',
+                package=motor_pkg,
                 plugin=motor_plugin,
                 name='front_right_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_right/target_velocity')],
             ),
             ComposableNode(
-                package='motor_driver',
-                plugin='motor_driver::MotorController',
+                package='motor_controller',
+                plugin='motor_controller::MotorController',
                 name='front_right_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 8. Rear Left Motor
             ComposableNode(
-                package='motor_driver',
+                package=motor_pkg,
                 plugin=motor_plugin,
                 name='rear_left_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_left/target_velocity')],
             ),
             ComposableNode(
-                package='motor_driver',
-                plugin='motor_driver::MotorController',
+                package='motor_controller',
+                plugin='motor_controller::MotorController',
                 name='rear_left_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 9. Rear Right Motor
             ComposableNode(
-                package='motor_driver',
+                package=motor_pkg,
                 plugin=motor_plugin,
                 name='rear_right_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_right/target_velocity')],
             ),
             ComposableNode(
-                package='motor_driver',
-                plugin='motor_driver::MotorController',
+                package='motor_controller',
+                plugin='motor_controller::MotorController',
                 name='rear_right_motor_controller',
                 parameters=[actuator_params_path],
             ),

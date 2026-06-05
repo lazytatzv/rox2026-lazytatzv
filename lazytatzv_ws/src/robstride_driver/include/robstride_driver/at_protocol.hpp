@@ -1,9 +1,9 @@
-#ifndef AT_MOTOR_DRIVER__AT_PROTOCOL_HPP_
-#define AT_MOTOR_DRIVER__AT_PROTOCOL_HPP_
+#ifndef ROBSTRIDE_DRIVER__AT_PROTOCOL_HPP_
+#define ROBSTRIDE_DRIVER__AT_PROTOCOL_HPP_
 
 #include <cstdint>
 
-namespace at_motor_driver {
+namespace robstride_driver {
 
 namespace at_protocol {
 
@@ -14,8 +14,8 @@ static constexpr uint8_t FRAME_FOOTER_CR = 0x0D; // '\r'
 static constexpr uint8_t FRAME_FOOTER_LF = 0x0A; // '\n'
 
 // --- Command Types ---
-static constexpr uint8_t CMD_BASIC_CONFIG = 0x20;   // Used for enabling/disabling
-static constexpr uint8_t CMD_DATA_STREAMING = 0x90; // Used for high-frequency velocity updates
+static constexpr uint8_t CMD_BASIC_CONFIG = 0x20;
+static constexpr uint8_t CMD_DATA_STREAMING = 0x90;
 
 // --- Identification ---
 static constexpr uint8_t DEFAULT_SOURCE_ID_HI = 0x07;
@@ -37,16 +37,8 @@ static constexpr uint8_t DIR_ROTATING = 0x01;
 static constexpr uint8_t DATA_LEN_8_BYTES = 0x08;
 static constexpr uint8_t SPEED_CMD_INDICATOR = 0x05;
 
-// --- Motor Hardware Identifiers ---
-enum class MotorAddress : uint8_t {
-  FRONT_LEFT  = 0x0C,
-  FRONT_RIGHT = 0x14,
-  REAR_LEFT   = 0x1C,
-  REAR_RIGHT  = 0x24
-};
-
 }  // namespace at_protocol
 
-}  // namespace at_motor_driver
+}  // namespace robstride_driver
 
-#endif  // AT_MOTOR_DRIVER__AT_PROTOCOL_HPP_
+#endif  // ROBSTRIDE_DRIVER__AT_PROTOCOL_HPP_

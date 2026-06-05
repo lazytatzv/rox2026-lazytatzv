@@ -1,9 +1,9 @@
-#include "motor_driver/motor_controller.hpp"
+#include "motor_controller/motor_controller.hpp"
 #include <chrono>
 #include <vector>
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace motor_driver {
+namespace motor_controller {
 
 MotorController::MotorController(const rclcpp::NodeOptions & options)
 : Node("motor_controller", options) {
@@ -153,6 +153,6 @@ rcl_interfaces::msg::SetParametersResult MotorController::on_parameter_event(
   return result;
 }
 
-}  // namespace motor_driver
+}  // namespace motor_controller
 
-RCLCPP_COMPONENTS_REGISTER_NODE(motor_driver::MotorController)
+RCLCPP_COMPONENTS_REGISTER_NODE(motor_controller::MotorController)

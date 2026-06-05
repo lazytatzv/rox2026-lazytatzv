@@ -1,11 +1,11 @@
-#ifndef MOTOR_DRIVER__SERIAL_GATEWAY_HPP_
-#define MOTOR_DRIVER__SERIAL_GATEWAY_HPP_
+#ifndef SERIAL_GATEWAY__SERIAL_GATEWAY_HPP_
+#define SERIAL_GATEWAY__SERIAL_GATEWAY_HPP_
 
 #include <boost/asio.hpp>
 #include "rclcpp/rclcpp.hpp"
 #include "robot_interfaces/msg/serial_frame.hpp"
 
-namespace motor_driver {
+namespace serial_gateway {
 
 class SerialGateway : public rclcpp::Node {
  public:
@@ -22,6 +22,6 @@ class SerialGateway : public rclcpp::Node {
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_frames_;
 };
 
-}  // namespace motor_driver
+}  // namespace serial_gateway
 
-#endif  // MOTOR_DRIVER__SERIAL_GATEWAY_HPP_
+#endif  // SERIAL_GATEWAY__SERIAL_GATEWAY_HPP_

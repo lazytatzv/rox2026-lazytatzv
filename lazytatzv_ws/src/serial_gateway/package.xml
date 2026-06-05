@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>serial_gateway</name>
+  <version>0.0.1</version>
+  <description>Universal Serial Gateway for ROX2026</description>
+  <maintainer email="tatsukiyano@example.com">tatsukiyano</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>robot_interfaces</depend>
+  <depend>libboost-system-dev</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
