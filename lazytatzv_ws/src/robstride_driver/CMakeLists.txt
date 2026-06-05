@@ -27,6 +27,7 @@ ament_target_dependencies(robstride_motor_component
   rclcpp
   rclcpp_components
   std_msgs
+  sensor_msgs
   robot_interfaces
 )
 
@@ -48,4 +49,6 @@ install(DIRECTORY include/
 )
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_package()
+GET)
 ament_package()

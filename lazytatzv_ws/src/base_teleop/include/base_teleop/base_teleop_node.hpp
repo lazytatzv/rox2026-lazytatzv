@@ -41,6 +41,8 @@ class BaseTeleopNode : public rclcpp::Node {
   // Cached parameters (topics)
   std::string topic_joy_;
   std::string topic_cmd_vel_;
+
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 
 }  // namespace base_teleop

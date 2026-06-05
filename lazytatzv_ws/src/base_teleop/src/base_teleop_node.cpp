@@ -31,7 +31,7 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
     topic_joy_, qos, std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
 
   // Register parameter callback for runtime updates
-  this->add_on_set_parameters_callback(
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
       std::bind(&BaseTeleopNode::on_set_parameters_callback, this, std::placeholders::_1));
 
   RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized: joy='%s' cmd_vel='%s'", 
