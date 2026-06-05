@@ -1,4 +1,9 @@
-# Actuator and Gateway settings
+# Robstride (AT Protocol) Actuator Settings
+/serial_gateway:
+  ros__parameters:
+    serial_port: "/dev/ttyUSB1"
+    baud_rate: 921600
+
 /wheel_speeds_dispatcher:
   ros__parameters:
     max_wheel_speed: 20.0
@@ -7,18 +12,13 @@
     rear_left_topic: "/rear_left/desired_velocity"
     rear_right_topic: "/rear_right/desired_velocity"
 
-/at_bus_gateway:
-  ros__parameters:
-    serial_port: "/dev/ttyUSB1"
-    baud_rate: 921600
-
-# Individual Motor Parameters
+# Individual Motor Parameters (Robstride)
 /front_left_motor:
   ros__parameters:
     motor_id: 0x0C
     invert_direction: false
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/at_bus/tx_queue"
+    topic_tx_queue: "/serial_bus/tx_queue"
 
 /front_left_motor_controller:
   ros__parameters:
@@ -37,7 +37,7 @@
     motor_id: 0x14
     invert_direction: true
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/at_bus/tx_queue"
+    topic_tx_queue: "/serial_bus/tx_queue"
 
 /front_right_motor_controller:
   ros__parameters:
@@ -56,7 +56,7 @@
     motor_id: 0x1C
     invert_direction: false
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/at_bus/tx_queue"
+    topic_tx_queue: "/serial_bus/tx_queue"
 
 /rear_left_motor_controller:
   ros__parameters:
@@ -75,7 +75,7 @@
     motor_id: 0x24
     invert_direction: true
     max_speed_limit_percentage: 50.0
-    topic_tx_queue: "/at_bus/tx_queue"
+    topic_tx_queue: "/serial_bus/tx_queue"
 
 /rear_right_motor_controller:
   ros__parameters:

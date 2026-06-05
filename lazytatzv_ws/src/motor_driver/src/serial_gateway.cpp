@@ -1,11 +1,11 @@
-#include "at_motor_driver/at_bus_gateway.hpp"
+#include "motor_driver/serial_gateway.hpp"
 #include <boost/asio.hpp>
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace at_motor_driver {
+namespace motor_driver {
 
-AtBusGateway::AtBusGateway(const rclcpp::NodeOptions& options) 
-: Node("at_bus_gateway", options) {
+SerialGateway::SerialGateway(const rclcpp::NodeOptions& options) 
+: Node("serial_gateway", options) {
   this->declare_parameter("serial_port", "/dev/ttyUSB1");
   this->declare_parameter("baud_rate", 921600);
 
@@ -27,32 +27,31 @@ AtBusGateway::AtBusGateway(const rclcpp::NodeOptions& options)
     RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s. Error: %s", port_path.c_str(), e.what());
     throw;
   }
+subscription_serial_frames_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
+  "/serial_bus/tx_queue", 100, std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
 
-  subscription_at_frames_ = this->create_subscription<robot_interfaces::msg::AtFrame>(
-    "/at_bus/tx_queue", 100, std::bind(&AtBusGateway::at_frame_callback, this, std::placeholders::_1));
-    
-  RCLCPP_INFO(this->get_logger(), "AT Bus Gateway (Boost.Asio) started on %s at %d baud", 
-    port_path.c_str(), baud_rate);
+RCLCPP_INFO(this->get_logger(), "Serial Gateway (Boost.Asio) started on %s at %d baud", 
+  port_path.c_str(), baud_rate);
 }
 
-AtBusGateway::~AtBusGateway() {
-  if (serial_port_ && serial_port_->is_open()) {
-    serial_port_->close();
-  }
+SerialGateway::~SerialGateway() {
+if (serial_port_ && serial_port_->is_open()) {
+  serial_port_->close();
+}
 }
 
-void AtBusGateway::at_frame_callback(const robot_interfaces::msg::AtFrame::SharedPtr message) {
-  if (!serial_port_ || !serial_port_->is_open()) return;
-  
-  try {
-    // Synchronous write for simplicity in this version
-    boost::asio::write(*serial_port_, boost::asio::buffer(message->frame_data));
-  } catch (const std::exception& e) {
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, 
-      "Serial write failed: %s", e.what());
-  }
+void SerialGateway::serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+if (!serial_port_ || !serial_port_->is_open()) return;
+
+try {
+  // Synchronous write for simplicity in this version
+  boost::asio::write(*serial_port_, boost::asio::buffer(message->frame_data));
+} catch (const std::exception& e) {
+  RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, 
+    "Serial write failed: %s", e.what());
+}
 }
 
-}  // namespace at_motor_driver
+}  // namespace motor_driver
 
-RCLCPP_COMPONENTS_REGISTER_NODE(at_motor_driver::AtBusGateway)
+RCLCPP_COMPONENTS_REGISTER_NODE(motor_driver::SerialGateway)

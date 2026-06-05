@@ -1,9 +1,9 @@
-#include "at_motor_driver/motor_controller.hpp"
+#include "motor_driver/motor_controller.hpp"
 #include <chrono>
 #include <vector>
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace at_motor_driver {
+namespace motor_driver {
 
 MotorController::MotorController(const rclcpp::NodeOptions & options)
 : Node("motor_controller", options) {
@@ -64,31 +64,21 @@ void MotorController::control_tick() {
   std_msgs::msg::Float64 out_msg;
 
   if (!use_outer_pid_ || !have_meas) {
-    // No outer-loop or no measurement yet: forward desired directly
     out_msg.data = desired;
     pub_target_->publish(out_msg);
     return;
   }
 
   double error = desired - measured;
-
-  // Proportional
   double p = kp_ * error;
-
-  // Integral with anti-windup via clamping
   integrator_ += error / rate_hz_;
   double i = ki_ * integrator_;
+  double d = kd_ * (error - last_error_) * rate_hz_;
 
-  // Derivative (simple)
-  double d = 0.0;
-  d = kd_ * (error - last_error_) * rate_hz_;
+  double u = p + i + d + desired;
 
-  double u = p + i + d + desired; // feedforward + PI
-
-  // saturate
   if (u > max_output_) {
     u = max_output_;
-    // anti-windup: prevent integrator growth
     if (i > 0.0) integrator_ -= error / rate_hz_; 
   } else if (u < -max_output_) {
     u = -max_output_;
@@ -96,7 +86,6 @@ void MotorController::control_tick() {
   }
 
   last_error_ = error;
-
   out_msg.data = u;
   pub_target_->publish(out_msg);
 }
@@ -164,6 +153,6 @@ rcl_interfaces::msg::SetParametersResult MotorController::on_parameter_event(
   return result;
 }
 
-}  // namespace at_motor_driver
+}  // namespace motor_driver
 
-RCLCPP_COMPONENTS_REGISTER_NODE(at_motor_driver::MotorController)
+RCLCPP_COMPONENTS_REGISTER_NODE(motor_driver::MotorController)

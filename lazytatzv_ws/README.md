@@ -43,7 +43,11 @@ A GitHub Actions workflow is included to run `colcon build` and `colcon test` on
 
 コンポーネントコンテナを利用した一括起動：
 ```bash
+# デフォルト (Robstride/ATプロトコル)
 ros2 launch robot_bringup system_pro.launch.py
+
+# DDSM115 を使用する場合
+ros2 launch robot_bringup system_pro.launch.py motor_type:=ddsm
 ```
 
 ### 個別モーターテスト (デバッグ・調整用)
@@ -51,14 +55,11 @@ ros2 launch robot_bringup system_pro.launch.py
 「とりあえず手元にあるモーターを動かしたい」「PIDの調整をしたい」という場合に便利な、個別テスト用 launch です。
 
 ```bash
-# 基本起動 (ID:12(0x0C), Port:/dev/ttyUSB1)
-ros2 launch robot_bringup motor_test.launch.py
+# Robstride をテスト (デフォルト)
+ros2 launch robot_bringup motor_test.launch.py id:=12
 
-# IDとポートを指定して起動 (IDは10進数で指定)
-ros2 launch robot_bringup motor_test.launch.py id:=20 port:=/dev/ttyUSB0
-
-# PID制御をオフにして生値を送信する場合
-ros2 launch robot_bringup motor_test.launch.py use_pid:=false
+# DDSM115 をテスト (ID: 1, Port: /dev/ttyUSB0)
+ros2 launch robot_bringup motor_test.launch.py motor_type:=ddsm id:=1 port:=/dev/ttyUSB0
 ```
 
 #### テストコマンド例：

@@ -6,7 +6,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WheelSpeeds.msg"
-  "msg/AtFrame.msg"
+  "msg/SerialFrame.msg"
 )
 
 ament_package()

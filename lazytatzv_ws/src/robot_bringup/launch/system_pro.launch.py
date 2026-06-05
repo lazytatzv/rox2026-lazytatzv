@@ -1,26 +1,43 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     """
-    最強・究極構成 (Actuator Abstraction版): 
+    真・最強構成 (Vendor-Neutral版): 
     - 1ノード = 1モーターの完全分散設計
-    - 高速ゲートウェイによるシリアル一元管理
+    - シリアルゲートウェイによる一元管理
+    - モータータイプ（robstride/ddsm）を引数で即座に切り替え可能
     - YAMLによる全ノード集中パラメータ管理
-    - Composable Nodes による低レイテンシ実行
     """
     
+    # 引数定義
+    motor_type_arg = DeclareLaunchArgument(
+        'motor_type',
+        default_value='robstride',
+        description='Type of motor to use (robstride, ddsm)'
+    )
+    motor_type = LaunchConfiguration('motor_type')
+
     # パス取得
     package_bringup_share_directory = get_package_share_directory('robot_bringup')
     twist_mux_configuration_path = os.path.join(package_bringup_share_directory, 'config', 'twist_mux.yaml')
-    
-    # Split YAML configurations
     physical_params_path = os.path.join(package_bringup_share_directory, 'config', 'physical.yaml')
     teleop_params_path = os.path.join(package_bringup_share_directory, 'config', 'teleop.yaml')
-    actuator_params_path = os.path.join(package_bringup_share_directory, 'config', 'actuators.yaml')
+    
+    # 動的なYAMLパス設定
+    actuator_params_path = PythonExpression([
+        "'", os.path.join(package_bringup_share_directory, 'config', 'actuators_'), "' + '", motor_type, "' + '.yaml'"
+    ])
+
+    # 動的なプラグイン名設定
+    motor_plugin = PythonExpression([
+        "'motor_driver::RobstrideMotorNode' if '", motor_type, "' == 'robstride' else 'motor_driver::DdsmMotorNode'"
+    ])
 
     container = ComposableNodeContainer(
         name='robot_system_container',
@@ -67,67 +84,67 @@ def generate_launch_description():
             
             # --- Distributed Actuator Layer ---
             
-            # 5. AT Bus Gateway (Owns /dev/ttyUSB1)
+            # 5. Serial Gateway
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::AtBusGateway',
-                name='at_bus_gateway',
+                package='motor_driver',
+                plugin='motor_driver::SerialGateway',
+                name='serial_gateway',
                 parameters=[actuator_params_path],
             ),
             
             # 6. Front Left Motor
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::AtMotorNode',
+                package='motor_driver',
+                plugin=motor_plugin,
                 name='front_left_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_left/target_velocity')],
             ),
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::MotorController',
+                package='motor_driver',
+                plugin='motor_driver::MotorController',
                 name='front_left_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 7. Front Right Motor
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::AtMotorNode',
+                package='motor_driver',
+                plugin=motor_plugin,
                 name='front_right_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'front_right/target_velocity')],
             ),
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::MotorController',
+                package='motor_driver',
+                plugin='motor_driver::MotorController',
                 name='front_right_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 8. Rear Left Motor
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::AtMotorNode',
+                package='motor_driver',
+                plugin=motor_plugin,
                 name='rear_left_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_left/target_velocity')],
             ),
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::MotorController',
+                package='motor_driver',
+                plugin='motor_driver::MotorController',
                 name='rear_left_motor_controller',
                 parameters=[actuator_params_path],
             ),
             # 9. Rear Right Motor
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::AtMotorNode',
+                package='motor_driver',
+                plugin=motor_plugin,
                 name='rear_right_motor',
                 parameters=[actuator_params_path],
                 remappings=[('~/target_velocity', 'rear_right/target_velocity')],
             ),
             ComposableNode(
-                package='at_motor_driver',
-                plugin='at_motor_driver::MotorController',
+                package='motor_driver',
+                plugin='motor_driver::MotorController',
                 name='rear_right_motor_controller',
                 parameters=[actuator_params_path],
             ),
@@ -135,4 +152,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    return LaunchDescription([container])
+    return LaunchDescription([
+        motor_type_arg,
+        container
+    ])

@@ -1,8 +1,16 @@
 # Physical parameters for mecanum base
+
+# 実測が必要!!!!!!!
+
+# - half_length: ロボットの中心から前輪までの距離
+# - half_width: ロボットの中心から左右の車輪までの距離
+# - wheel_radius: 車輪の半径
+
+
 /kinematics_engine_node:
   ros__parameters:
     half_length: 0.12
     half_width: 0.10
     wheel_radius: 0.05
-    topic_cmd_vel: "cmd_vel"
+    topic_cmd_vel: "cmd_vel" # velodity command topic
     topic_wheel_speeds: "wheel_speeds"

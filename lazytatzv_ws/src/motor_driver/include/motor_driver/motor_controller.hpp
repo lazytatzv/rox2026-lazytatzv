@@ -1,19 +1,17 @@
-#ifndef AT_MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
-#define AT_MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
+#ifndef MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
+#define MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
 
-#include <atomic>
 #include <memory>
 #include <string>
-#include <vector>
+#include <atomic>
 #include "rclcpp/rclcpp.hpp"
-#include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "std_msgs/msg/float64.hpp"
 
-namespace at_motor_driver {
+namespace motor_driver {
 
 class MotorController : public rclcpp::Node {
  public:
-  explicit MotorController(const rclcpp::NodeOptions & options);
+  explicit MotorController(const rclcpp::NodeOptions& options);
 
  private:
   void desired_callback(const std_msgs::msg::Float64::SharedPtr msg);
@@ -22,23 +20,27 @@ class MotorController : public rclcpp::Node {
   rcl_interfaces::msg::SetParametersResult on_parameter_event(
     const std::vector<rclcpp::Parameter>& params);
 
-  // params
-  bool use_outer_pid_;
-  double kp_, ki_, kd_;
-  double max_output_;
-  double rate_hz_;
-  std::string desired_topic_;
-  std::string measured_topic_;
-  std::string output_topic_;
+  // PID Parameters
+  bool use_outer_pid_{true};
+  double kp_{0.5};
+  double ki_{0.1};
+  double kd_{0.0};
+  double max_output_{1.0};
+  double rate_hz_{20.0};
 
-  // state
+  // State
+  double integrator_{0.0};
+  double last_error_{0.0};
   std::atomic<double> desired_{0.0};
   std::atomic<double> measured_{0.0};
   std::atomic<bool> have_measured_{false};
 
-  double integrator_ = 0.0;
-  double last_error_ = 0.0;
+  // Topics
+  std::string desired_topic_;
+  std::string measured_topic_;
+  std::string output_topic_;
 
+  // ROS
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sub_desired_;
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sub_measured_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_target_;
@@ -46,6 +48,6 @@ class MotorController : public rclcpp::Node {
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 
-}  // namespace at_motor_driver
+}  // namespace motor_driver
 
-#endif  // AT_MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
+#endif  // MOTOR_DRIVER__MOTOR_CONTROLLER_HPP_
