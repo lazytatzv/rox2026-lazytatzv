@@ -45,7 +45,7 @@ class RobstrideMotorNode : public rclcpp::Node {
   // ROS components
   rclcpp::Publisher<robot_interfaces::msg::SerialFrame>::SharedPtr publisher_serial_frames_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_joint_state_;
-  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr subscription_velocity_;
+  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_rx_;
   
   rclcpp::TimerBase::SharedPtr enable_timer_;
