@@ -36,7 +36,7 @@ jobs:
         run: |
           docker run --rm lazytatzv:test-${{ matrix.ros_distro }} bash -c "
             source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
-            colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+            colcon build --symlink-install --parallel-workers 2 --cmake-args -DCMAKE_BUILD_TYPE=Release && \
             source install/setup.bash && \
             colcon test --event-handlers console_direct+ && \
             colcon test-result --verbose

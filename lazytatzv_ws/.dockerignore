@@ -1,0 +1,17 @@
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Git
+.git/
+.gitmodules
+
+# Docker assets
+Dockerfile
+compose.yaml
+.dockerignore
