@@ -10,9 +10,9 @@ find_package(sensor_msgs REQUIRED)
 find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
-find_package(ament_lint_auto REQUIRED)
-
 if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
   ament_add_gtest(test_protocol test/test_protocol.cpp)
   target_include_directories(test_protocol PRIVATE
     include

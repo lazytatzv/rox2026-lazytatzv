@@ -7,7 +7,6 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(ament_lint_auto REQUIRED)
 
 add_library(serial_gateway_component SHARED
   src/serial_gateway.cpp
@@ -43,6 +42,11 @@ install(TARGETS
 install(DIRECTORY include/
   DESTINATION include
 )
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_package()

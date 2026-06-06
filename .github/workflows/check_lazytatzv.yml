@@ -7,7 +7,45 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ros_distro: [jazzy]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for Linting
+        uses: docker/build-push-action@v5
+        with:
+          context: ./lazytatzv_ws
+          file: ./lazytatzv_ws/Dockerfile
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+          load: true
+          tags: lazytatzv:lint-${{ matrix.ros_distro }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Linting in Docker
+        run: |
+          docker run --rm lazytatzv:lint-${{ matrix.ros_distro }} bash -c "
+            source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
+            colcon build --packages-select robot_interfaces && \
+            source install/setup.bash && \
+            colcon test --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --event-handlers console_direct+ --ctest-args -R lint
+          "
+
   docker_build_test:
+    name: Build & Test
+    needs: lint # Lintが通らないとビルドしない
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -34,7 +72,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Tests in Docker
+      - name: Run Build & Functional Tests
         run: |
           docker run --rm lazytatzv:test-${{ matrix.ros_distro }} bash -c "
             source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
