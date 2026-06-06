@@ -10,6 +10,9 @@
 /kinematics_engine_node:
   ros__parameters:
     # Actuator Selection: "at", "can", or "ddsm"
+    # "at" ==> Robstrideの基盤
+    # "can" ==> Usb-to-can analyzerを使った制御
+    # "ddsm" ==> DDSM115を使った制御(ROX2026では使わないがテスト用)
     actuator_type: "at"
     
     half_length: 0.12

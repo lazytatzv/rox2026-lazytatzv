@@ -1,12 +1,17 @@
 # ROX2026 Structured Actuator Settings (Robstride AT)
 
+# Robstride公式基盤を使った制御をする際のドライバ等の設定
+
 # Communication Layer
 /communication/serial_gateway:
   ros__parameters:
-    serial_port: "/dev/ttyUSB1"
-    baud_rate: 921600
+    serial_port: "/dev/ttyUSB1" # udevで管理
+    baud_rate: 921600 # 公式datasheetより固定. 触らない
 
 # Hardware Abstraction Layer (HAL)
+
+# max_speed_limit_percentage (0-100)
+# モーターの最大速度を制限する為のparameter
 /hal/speed_dispatcher:
   ros__parameters:
     front_left_topic: "/motors/front_left/velocity_command"

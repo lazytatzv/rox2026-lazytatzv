@@ -1,4 +1,10 @@
+# THIS IS A TEST CONFIG FILE FOR DDSM115.
+
 # DDSM115 (Binary Protocol) Actuator Settings
+
+# ddsmを使うときのドライバ設定
+# 使う際はphysical.yamlのactuator_typeがddsmであることが前提
+
 /serial_gateway:
   ros__parameters:
     serial_port: "/dev/ttyUSB0"

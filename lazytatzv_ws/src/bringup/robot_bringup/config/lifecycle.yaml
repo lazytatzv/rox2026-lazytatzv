@@ -1,0 +1,14 @@
+# Lifecycle Management for ROX2026
+# You can add your own lifecycle nodes here!
+/lifecycle_manager_robot:
+  ros__parameters:
+    autostart: true
+    bond_timeout: 4.0
+    # Common nodes that are always present
+    node_names:
+      # comm layerやmotor driversはlaunchで動的に生成されるので追加しない.
+
+      - /hal/speed_dispatcher
+      - /mecanum_kinematics_node
+      # --- Add your extra nodes (IMU, LiDAR, etc.) below ---
+      # - /sensors/imu_node

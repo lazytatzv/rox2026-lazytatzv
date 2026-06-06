@@ -7,6 +7,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
 find_package(ament_lint_auto REQUIRED)
@@ -20,6 +21,7 @@ endif()
 
 add_library(robstride_motor_component SHARED
   src/robstride_motor_node.cpp
+  src/robstride_can_node.cpp
 )
 target_include_directories(robstride_motor_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -27,15 +29,21 @@ target_include_directories(robstride_motor_component PUBLIC
 )
 ament_target_dependencies(robstride_motor_component
   rclcpp
+  rclcpp_lifecycle
   rclcpp_components
   std_msgs
   sensor_msgs
+  seeed_usb_can_analyzer_driver
   robot_interfaces
 )
 
 rclcpp_components_register_node(robstride_motor_component
   PLUGIN "robstride_driver::RobstrideMotorNode"
   EXECUTABLE robstride_motor_node
+)
+rclcpp_components_register_node(robstride_motor_component
+  PLUGIN "robstride_driver::RobstrideCanNode"
+  EXECUTABLE robstride_can_node
 )
 
 install(TARGETS

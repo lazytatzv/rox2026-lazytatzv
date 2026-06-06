@@ -1,9 +1,9 @@
 [submodule "lazytatzv_ws/src/ddsm115_ros2_driver"]
-	path = lazytatzv_ws/src/ddsm115_ros2_driver
+	path = lazytatzv_ws/src/drivers/actuators/ddsm115_ros2_driver
 	url = git@github.com:lazytatzv/ddsm115_ros2_driver.git
 [submodule "lazytatzv_ws/src/el05_usb_can_driver"]
-	path = lazytatzv_ws/src/el05_usb_can_driver
+	path = lazytatzv_ws/src/drivers/actuators/el05_usb_can_driver
 	url = https://github.com/rodep-soft/el05_usb_can_driver.git
 [submodule "lazytatzv_ws/src/usb_can_analyzer"]
-	path = lazytatzv_ws/src/usb_can_analyzer
+	path = lazytatzv_ws/src/drivers/communication/usb_can_analyzer
 	url = https://github.com/rodep-soft/ROS2-Seeed-Studio-USB-CAN-Analyzer-Driver.git
