@@ -1,5 +1,6 @@
 #include "serial_gateway/serial_gateway.hpp"
 #include <boost/asio.hpp>
+#include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
 namespace serial_gateway {

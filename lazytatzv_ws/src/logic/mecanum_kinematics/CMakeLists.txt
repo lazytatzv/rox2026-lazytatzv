@@ -8,7 +8,9 @@ find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
@@ -22,7 +24,6 @@ target_include_directories(mecanum_kinematics_component PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
-# Crucial: Link ALL dependencies to the target
 ament_target_dependencies(mecanum_kinematics_component
   rclcpp
   rclcpp_lifecycle
@@ -30,7 +31,9 @@ ament_target_dependencies(mecanum_kinematics_component
   geometry_msgs
   sensor_msgs
   nav_msgs
+  tf2
   tf2_ros
+  tf2_geometry_msgs
   std_msgs
   robot_interfaces
   rcl_interfaces

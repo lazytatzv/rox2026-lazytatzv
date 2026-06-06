@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
 namespace mecanum_kinematics {
