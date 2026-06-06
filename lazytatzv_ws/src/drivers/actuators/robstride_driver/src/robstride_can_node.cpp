@@ -1,6 +1,7 @@
 #include "robstride_driver/robstride_can_node.hpp"
 #include <cmath>
 #include <algorithm>
+#include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
 namespace robstride_driver {
