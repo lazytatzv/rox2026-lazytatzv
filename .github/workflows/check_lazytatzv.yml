@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ros_distro: [jazzy]
+        ros_distro: [jazzy, humble]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,8 +31,8 @@ jobs:
             ROS_DISTRO=${{ matrix.ros_distro }}
           load: true
           tags: lazytatzv:lint-${{ matrix.ros_distro }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=lint-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=lint-${{ matrix.ros_distro }}
 
       - name: Run Linting in Docker
         run: |
@@ -45,7 +45,7 @@ jobs:
 
   docker_build_test:
     name: Build & Test
-    needs: lint # Lintが通らないとビルドしない
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -69,8 +69,8 @@ jobs:
             ROS_DISTRO=${{ matrix.ros_distro }}
           load: true
           tags: lazytatzv:test-${{ matrix.ros_distro }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=test-${{ matrix.ros_distro }}
+          cache-to: type=gha,mode=max,scope=test-${{ matrix.ros_distro }}
 
       - name: Run Build & Functional Tests
         run: |
