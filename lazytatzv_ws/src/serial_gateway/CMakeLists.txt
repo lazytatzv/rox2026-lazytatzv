@@ -18,6 +18,7 @@ target_include_directories(serial_gateway_component PUBLIC
 )
 ament_target_dependencies(serial_gateway_component
   rclcpp
+  rclcpp_lifecycle
   rclcpp_components
   robot_interfaces
 )
@@ -43,4 +44,6 @@ install(DIRECTORY include/
 )
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_package()
+GET)
 ament_package()

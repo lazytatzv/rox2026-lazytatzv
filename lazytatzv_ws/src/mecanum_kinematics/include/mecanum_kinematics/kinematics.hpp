@@ -16,6 +16,14 @@ std::array<double, 4> compute_wheel_speeds(
 	double half_width,
 	double wheel_radius);
 
+// Compute body twist (vx, vy, omega) from wheel angular speeds.
+// Return array: [linear_x, linear_y, angular_z]
+std::array<double, 3> compute_body_twist(
+	const std::array<double, 4>& wheel_speeds,
+	double half_length,
+	double half_width,
+	double wheel_radius);
+
 }  // namespace mecanum_kinematics
 
 #endif  // MECANUM_KINEMATICS__KINEMATICS_HPP_

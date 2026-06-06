@@ -13,6 +13,7 @@ def launch_setup(context, *args, **kwargs):
     physical_params = os.path.join(pkg_bringup, 'config', 'physical.yaml')
     twist_mux_params = os.path.join(pkg_bringup, 'config', 'twist_mux.yaml')
     teleop_params = os.path.join(pkg_bringup, 'config', 'teleop.yaml')
+    lifecycle_params = os.path.join(pkg_bringup, 'config', 'lifecycle.yaml')
     urdf_file = os.path.join(pkg_bringup, 'urdf', 'robot.urdf')
 
     with open(physical_params, 'r') as f:
@@ -32,32 +33,29 @@ def launch_setup(context, *args, **kwargs):
 
     nodes = []
     
-    # --- 1. CORE LAYER (Global) ---
+    # --- 1. CORE LAYER (Normal Nodes) ---
     nodes.append(ComposableNode(package='joy', plugin='joy::JoyNode', name='joy_node', parameters=[teleop_params]))
     nodes.append(ComposableNode(package='base_teleop', plugin='base_teleop::BaseTeleopNode', name='teleop', 
                                 parameters=[teleop_params], remappings=[('cmd_vel', 'cmd_vel_joy')]))
     nodes.append(ComposableNode(package='twist_mux', plugin='twist_mux::TwistMux', name='twist_mux', 
                                 parameters=[twist_mux_params], remappings=[('cmd_vel_out', 'cmd_vel')]))
+
+    # --- 2. LIFECYCLE MANAGED NODES ---
+    # These will be managed by nav2_lifecycle_manager
     nodes.append(ComposableNode(package='mecanum_kinematics', plugin='mecanum_kinematics::MecanumKinematicsNode', 
                                 name='kinematics_engine', parameters=[physical_params]))
-
-    # --- 2. HAL LAYER (/hal) ---
     nodes.append(ComposableNode(package='mecanum_kinematics', plugin='mecanum_kinematics::WheelSpeedsDispatcher', 
                                 name='speed_dispatcher', namespace='hal', parameters=[act_yaml]))
 
-    # --- 3. COMMUNICATION LAYER (/communication) ---
     if actuator_type in ['at', 'ddsm']:
         nodes.append(ComposableNode(package='serial_gateway', plugin='serial_gateway::SerialGateway', 
                                     name='serial_gateway', namespace='communication', parameters=[act_yaml]))
+        for side in ['front_left', 'front_right', 'rear_left', 'rear_right']:
+            nodes.append(ComposableNode(package=motor_pkg, plugin=motor_plugin, name=side, namespace='motors', parameters=[act_yaml]))
 
     if actuator_type == 'can':
         nodes.append(ComposableNode(package='seeed_usb_can_analyzer_driver', plugin='seeed_usb_can_analyzer_driver::UsbCanAnalyzerNode', 
                                     name='usb_can_analyzer', namespace='communication', parameters=[act_yaml]))
-
-    # --- 4. MOTOR LAYER (/motors) ---
-    if actuator_type in ['at', 'ddsm']:
-        for side in ['front_left', 'front_right', 'rear_left', 'rear_right']:
-            nodes.append(ComposableNode(package=motor_pkg, plugin=motor_plugin, name=side, namespace='motors', parameters=[act_yaml]))
 
     container = ComposableNodeContainer(
         name='robot_master_container', namespace='', package='rclcpp_components',
@@ -65,7 +63,15 @@ def launch_setup(context, *args, **kwargs):
 
     launch_actions = [container]
 
-    # --- 5. SYSTEM AGGREGATION & VISUALIZATION ---
+    # --- 3. THE CONDUCTOR (Lifecycle Manager) ---
+    launch_actions.append(Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_robot',
+        parameters=[lifecycle_params]
+    ))
+
+    # --- 4. SYSTEM AGGREGATION & VISUALIZATION ---
     with open(urdf_file, 'r') as f: robot_desc = f.read()
     launch_actions.append(Node(package='robot_state_publisher', executable='robot_state_publisher', 
                                name='robot_state_publisher', parameters=[{'robot_description': robot_desc}]))
@@ -77,6 +83,8 @@ def launch_setup(context, *args, **kwargs):
     launch_actions.append(Node(package='foxglove_bridge', executable='foxglove_bridge_node', name='foxglove_bridge'))
 
     if actuator_type == 'can':
+        # CAN drivers (Python) currently don't support Lifecycle. 
+        # For 'can' mode, the manager will just wait or skip them if not on the list.
         for side in ['front_left', 'front_right', 'rear_left', 'rear_right']:
             launch_actions.append(Node(package='el05_usb_can_driver', executable='el05_motor_node', 
                                        name=side, namespace='motors', parameters=[act_yaml]))

@@ -1,0 +1,16 @@
+# Lifecycle Management for ROX2026
+/lifecycle_manager_robot:
+  ros__parameters:
+    autostart: true
+    node_names:
+      # 1. Physical Layer
+      - /communication/serial_gateway
+      # 2. Driver Layer
+      - /motors/front_left
+      - /motors/front_right
+      - /motors/rear_left
+      - /motors/rear_right
+      # 3. Intermediate Layer (HAL)
+      - /hal/speed_dispatcher
+      # 4. Calculation Layer
+      - kinematics_engine

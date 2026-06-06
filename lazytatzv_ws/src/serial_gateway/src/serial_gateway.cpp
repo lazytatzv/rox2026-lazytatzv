@@ -5,33 +5,9 @@
 namespace serial_gateway {
 
 SerialGateway::SerialGateway(const rclcpp::NodeOptions& options) 
-: Node("serial_gateway", options) {
+: rclcpp_lifecycle::LifecycleNode("serial_gateway", options) {
   this->declare_parameter("serial_port", "/dev/ttyUSB1");
   this->declare_parameter("baud_rate", 921600);
-
-  init_serial_port();
-
-  publisher_rx_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(
-    "/serial_bus/rx_queue", 100);
-
-  subscription_serial_frames_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
-    "/serial_bus/tx_queue", 100, std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
-  
-  // Start async read loop
-  start_async_read();
-
-  // Run io_context in a dedicated thread
-  io_thread_ = std::thread([this]() {
-    try {
-      io_context_->run();
-    } catch (const std::exception& e) {
-      RCLCPP_ERROR(this->get_logger(), "IO context error: %s", e.what());
-    }
-  });
-    
-  RCLCPP_INFO(this->get_logger(), "Serial Gateway (Boost.Asio) started on %s at %ld baud", 
-    this->get_parameter("serial_port").as_string().c_str(), 
-    this->get_parameter("baud_rate").as_int());
 }
 
 SerialGateway::~SerialGateway() {
@@ -44,6 +20,74 @@ SerialGateway::~SerialGateway() {
   if (serial_port_ && serial_port_->is_open()) {
     serial_port_->close();
   }
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+SerialGateway::on_configure(const rclcpp_lifecycle::State &)
+{
+  init_serial_port();
+
+  publisher_rx_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(
+    "/communication/rx_queue", 100);
+
+  subscription_serial_frames_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
+    "/communication/tx_queue", 100, std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
+
+  RCLCPP_INFO(get_logger(), "Configured on %s", this->get_parameter("serial_port").as_string().c_str());
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+SerialGateway::on_activate(const rclcpp_lifecycle::State &)
+{
+  publisher_rx_frames_->on_activate();
+  
+  // Start async read loop
+  start_async_read();
+
+  // Run io_context in a dedicated thread
+  if (!io_thread_.joinable()) {
+    io_thread_ = std::thread([this]() {
+      try {
+        if (io_context_->stopped()) io_context_->restart();
+        io_context_->run();
+      } catch (const std::exception& e) {
+        RCLCPP_ERROR(this->get_logger(), "IO context error: %s", e.what());
+      }
+    });
+  }
+    
+  RCLCPP_INFO(get_logger(), "Activated");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+SerialGateway::on_deactivate(const rclcpp_lifecycle::State &)
+{
+  publisher_rx_frames_->on_deactivate();
+  RCLCPP_INFO(get_logger(), "Deactivated");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+SerialGateway::on_cleanup(const rclcpp_lifecycle::State &)
+{
+  if (io_context_) io_context_->stop();
+  if (io_thread_.joinable()) io_thread_.join();
+  if (serial_port_ && serial_port_->is_open()) serial_port_->close();
+
+  subscription_serial_frames_.reset();
+  publisher_rx_frames_.reset();
+  
+  RCLCPP_INFO(get_logger(), "Cleaned up");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+SerialGateway::on_shutdown(const rclcpp_lifecycle::State &)
+{
+  RCLCPP_INFO(get_logger(), "Shutting down");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 void SerialGateway::init_serial_port() {
@@ -69,20 +113,16 @@ void SerialGateway::init_serial_port() {
 void SerialGateway::start_async_read() {
   if (!serial_port_ || !serial_port_->is_open()) return;
 
-  // Read until AT protocol delimiter \r\n
   boost::asio::async_read_until(*serial_port_, read_buffer_, "\r\n",
     [this](const boost::system::error_code& ec, std::size_t bytes_transferred) {
       if (!ec) {
-        auto msg = std::make_unique<robot_interfaces::msg::SerialFrame>();
-        
-        // Extract data from streambuf
-        std::istream is(&read_buffer_);
-        msg->frame_data.resize(bytes_transferred);
-        is.read(reinterpret_cast<char*>(msg->frame_data.data()), bytes_transferred);
-        
-        publisher_rx_frames_->publish(std::move(msg));
-        
-        // Continue reading
+        if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+          auto msg = std::make_unique<robot_interfaces::msg::SerialFrame>();
+          std::istream is(&read_buffer_);
+          msg->frame_data.resize(bytes_transferred);
+          is.read(reinterpret_cast<char*>(msg->frame_data.data()), bytes_transferred);
+          publisher_rx_frames_->publish(std::move(msg));
+        }
         start_async_read();
       } else if (ec != boost::asio::error::operation_aborted) {
         RCLCPP_ERROR(this->get_logger(), "Serial read error: %s", ec.message().c_str());
@@ -92,8 +132,8 @@ void SerialGateway::start_async_read() {
 
 void SerialGateway::serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
   if (!serial_port_ || !serial_port_->is_open()) return;
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
   
-  // Use post to ensure write happens on the io_thread
   io_context_->post([this, message]() {
     try {
       boost::asio::write(*serial_port_, boost::asio::buffer(message->frame_data));

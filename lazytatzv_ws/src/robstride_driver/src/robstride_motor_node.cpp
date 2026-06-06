@@ -8,30 +8,32 @@ namespace robstride_driver {
 using namespace at_protocol;
 
 RobstrideMotorNode::RobstrideMotorNode(const rclcpp::NodeOptions& options) 
-: Node("robstride_motor_node", options) {
-  // Common Parameters
+: rclcpp_lifecycle::LifecycleNode("robstride_motor_node", options) {
   this->declare_parameter("motor_id", 0x0C);
   this->declare_parameter("joint_name", "motor_joint");
   this->declare_parameter("invert_direction", false);
   this->declare_parameter("max_speed_limit_percentage", 50.0);
-  this->declare_parameter("topic_tx_queue", "/serial_bus/tx_queue");
-  this->declare_parameter("topic_rx_queue", "/serial_bus/rx_queue");
+  this->declare_parameter("topic_tx_queue", "/communication/tx_queue");
+  this->declare_parameter("topic_rx_queue", "/communication/rx_queue");
   this->declare_parameter("topic_velocity_command", "~/velocity_command");
 
-  // Physics Scaling Parameters (EL05 Defaults)
   this->declare_parameter("position_min_rad", -12.57);
   this->declare_parameter("position_max_rad", 12.57);
   this->declare_parameter("velocity_min_rad_s", -50.0);
   this->declare_parameter("velocity_max_rad_s", 50.0);
   this->declare_parameter("torque_min_nm", -6.0);
   this->declare_parameter("torque_max_nm", 6.0);
+}
 
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+RobstrideMotorNode::on_configure(const rclcpp_lifecycle::State &)
+{
   motor_id_ = static_cast<uint8_t>(this->get_parameter("motor_id").as_int());
   joint_name_ = this->get_parameter("joint_name").as_string();
   invert_direction_ = this->get_parameter("invert_direction").as_bool();
   topic_tx_queue_ = this->get_parameter("topic_tx_queue").as_string();
   topic_rx_queue_ = this->get_parameter("topic_rx_queue").as_string();
-  topic_target_velocity_ = this->get_parameter("topic_velocity_command").as_string();
+  topic_velocity_command_ = this->get_parameter("topic_velocity_command").as_string();
 
   pos_min_ = this->get_parameter("position_min_rad").as_double();
   pos_max_ = this->get_parameter("position_max_rad").as_double();
@@ -43,24 +45,60 @@ RobstrideMotorNode::RobstrideMotorNode(const rclcpp::NodeOptions& options)
   double max_speed_percentage = this->get_parameter("max_speed_limit_percentage").as_double();
   max_at_command_delta_ = static_cast<int>(NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
 
-  // ROS Publishers & Subscriptions
   publisher_serial_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(topic_tx_queue_, 10);
   publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", 10);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    topic_target_velocity_, 10, std::bind(&RobstrideMotorNode::velocity_callback, this, std::placeholders::_1));
+    topic_velocity_command_, 10, std::bind(&RobstrideMotorNode::velocity_callback, this, std::placeholders::_1));
 
   subscription_serial_rx_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
     topic_rx_queue_, 50, std::bind(&RobstrideMotorNode::serial_rx_callback, this, std::placeholders::_1));
 
-  // Sending enable command on startup
-  enable_timer_ = this->create_wall_timer(
-    std::chrono::seconds(1), [this]() {
-      this->send_enable_command();
-      this->enable_timer_->cancel();
-    });
+  RCLCPP_INFO(get_logger(), "Configured motor 0x%02X", motor_id_);
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
 
-  RCLCPP_INFO(this->get_logger(), "Robstride Motor Node (ID: 0x%02X, Joint: %s) started", motor_id_, joint_name_.c_str());
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+RobstrideMotorNode::on_activate(const rclcpp_lifecycle::State &)
+{
+  publisher_serial_frames_->on_activate();
+  publisher_joint_state_->on_activate();
+  
+  send_enable_command();
+  
+  RCLCPP_INFO(get_logger(), "Activated & Motor Enabled");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+RobstrideMotorNode::on_deactivate(const rclcpp_lifecycle::State &)
+{
+  send_disable_command();
+  
+  publisher_serial_frames_->on_deactivate();
+  publisher_joint_state_->on_deactivate();
+  
+  RCLCPP_INFO(get_logger(), "Deactivated & Motor Disabled");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+RobstrideMotorNode::on_cleanup(const rclcpp_lifecycle::State &)
+{
+  publisher_serial_frames_.reset();
+  publisher_joint_state_.reset();
+  subscription_velocity_.reset();
+  subscription_serial_rx_.reset();
+  
+  RCLCPP_INFO(get_logger(), "Cleaned up");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+RobstrideMotorNode::on_shutdown(const rclcpp_lifecycle::State &)
+{
+  RCLCPP_INFO(get_logger(), "Shutting down");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 double RobstrideMotorNode::uint_to_float(uint16_t value, double low, double high) {
@@ -80,18 +118,28 @@ void RobstrideMotorNode::send_enable_command() {
   publisher_serial_frames_->publish(std::move(frame));
 }
 
+void RobstrideMotorNode::send_disable_command() {
+  // To safely disable, send velocity 0 then config stop (or similar)
+  // For Robstride, writing 0 to enable register often disables it
+  auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
+  frame->frame_data = {
+    FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
+    DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id_,
+    DATA_LEN_8_BYTES, 0x00, REG_ADDR_MOTOR_ENABLE,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // Assuming 0x01 or 0x00 for disable depending on firmware
+    FRAME_FOOTER_CR, FRAME_FOOTER_LF
+  };
+  publisher_serial_frames_->publish(std::move(frame));
+}
+
 void RobstrideMotorNode::velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message) {
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
   if (message->data.empty()) return;
 
   double velocity_rad_s = message->data[0];
   if (invert_direction_) velocity_rad_s = -velocity_rad_s;
-
-  // Clamp to physical limits
   velocity_rad_s = std::clamp(velocity_rad_s, vel_min_, vel_max_);
 
-  // Map rad/s to AT command value
-  // Mapping: vel_max_ (50.0) -> NEUTRAL + max_at_command_delta_
-  //          0.0              -> NEUTRAL
   int delta = static_cast<int>(std::round((velocity_rad_s / vel_max_) * max_at_command_delta_));
   uint16_t at_value = NEUTRAL_VELOCITY_VALUE + delta;
   uint8_t direction_flag = (at_value == NEUTRAL_VELOCITY_VALUE) ? DIR_STOP : DIR_ROTATING;
@@ -110,16 +158,12 @@ void RobstrideMotorNode::velocity_callback(const std_msgs::msg::Float64MultiArra
 }
 
 void RobstrideMotorNode::serial_rx_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
   const auto& data = message->frame_data;
   
-  // AT Protocol Header Check (AT ...)
-  if (data.size() < 16) return; // Basic AT frame size
+  if (data.size() < 16) return;
   if (data[0] != FRAME_HEADER_A || data[1] != FRAME_HEADER_T) return;
-
-  // Check if this frame is from our motor
-  uint8_t sender_id = data[5];
-  if (sender_id != motor_id_) return;
-
+  if (data[5] != motor_id_) return;
   if (data.size() < 15) return; 
 
   uint16_t pos_u = (data[7] << 8) | data[8];

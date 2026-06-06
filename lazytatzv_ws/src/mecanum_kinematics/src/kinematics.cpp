@@ -26,4 +26,26 @@ std::array<double, 4> compute_wheel_speeds(
   return {fl, fr, rl, rr};
 }
 
+std::array<double, 3> compute_body_twist(
+  const std::array<double, 4>& wheel_speeds,
+  double half_length,
+  double half_width,
+  double wheel_radius)
+{
+  const double fl = wheel_speeds[0];
+  const double fr = wheel_speeds[1];
+  const double rl = wheel_speeds[2];
+  const double rr = wheel_speeds[3];
+
+  const double k = half_length + half_width;
+
+  // Body linear velocities [m/s] and angular velocity [rad/s]
+  // Forward kinematics based on mecanum geometry
+  double vx = (fl + fr + rl + rr) * wheel_radius / 4.0;
+  double vy = (-fl + fr + rl - rr) * wheel_radius / 4.0;
+  double omega = (-fl + fr - rl + rr) * wheel_radius / (4.0 * k);
+
+  return {vx, vy, omega};
+}
+
 }  // namespace mecanum_kinematics

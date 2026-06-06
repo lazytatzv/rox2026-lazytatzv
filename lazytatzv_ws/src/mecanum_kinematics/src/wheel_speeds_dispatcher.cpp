@@ -11,10 +11,22 @@
 namespace mecanum_kinematics {
 
 WheelSpeedsDispatcher::WheelSpeedsDispatcher(const rclcpp::NodeOptions & options)
-: Node("wheel_speeds_dispatcher", options)
+: rclcpp_lifecycle::LifecycleNode("wheel_speeds_dispatcher", options)
 {
   declare_parameters();
+}
 
+void WheelSpeedsDispatcher::declare_parameters()
+{
+  this->declare_parameter("front_left_topic", std::string("/motors/front_left/velocity_command"));
+  this->declare_parameter("front_right_topic", std::string("/motors/front_right/velocity_command"));
+  this->declare_parameter("rear_left_topic", std::string("/motors/rear_left/velocity_command"));
+  this->declare_parameter("rear_right_topic", std::string("/motors/rear_right/velocity_command"));
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+WheelSpeedsDispatcher::on_configure(const rclcpp_lifecycle::State &)
+{
   front_left_topic_ = this->get_parameter("front_left_topic").as_string();
   front_right_topic_ = this->get_parameter("front_right_topic").as_string();
   rear_left_topic_ = this->get_parameter("rear_left_topic").as_string();
@@ -30,27 +42,59 @@ WheelSpeedsDispatcher::WheelSpeedsDispatcher(const rclcpp::NodeOptions & options
   pub_rl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_left_topic_, rclcpp::SystemDefaultsQoS());
   pub_rr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_right_topic_, rclcpp::SystemDefaultsQoS());
 
-  parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&WheelSpeedsDispatcher::on_parameter_event, this, std::placeholders::_1));
-
-  RCLCPP_INFO(this->get_logger(), "WheelSpeedsDispatcher (Unified Interface) started");
+  RCLCPP_INFO(get_logger(), "Configured");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
-void WheelSpeedsDispatcher::declare_parameters()
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+WheelSpeedsDispatcher::on_activate(const rclcpp_lifecycle::State &)
 {
-  this->declare_parameter("front_left_topic", std::string("/front_left/velocity_command"));
-  this->declare_parameter("front_right_topic", std::string("/front_right/velocity_command"));
-  this->declare_parameter("rear_left_topic", std::string("/rear_left/velocity_command"));
-  this->declare_parameter("rear_right_topic", std::string("/rear_right/velocity_command"));
+  pub_fl_->on_activate();
+  pub_fr_->on_activate();
+  pub_rl_->on_activate();
+  pub_rr_->on_activate();
+  RCLCPP_INFO(get_logger(), "Activated");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+WheelSpeedsDispatcher::on_deactivate(const rclcpp_lifecycle::State &)
+{
+  pub_fl_->on_deactivate();
+  pub_fr_->on_deactivate();
+  pub_rl_->on_deactivate();
+  pub_rr_->on_deactivate();
+  RCLCPP_INFO(get_logger(), "Deactivated");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+WheelSpeedsDispatcher::on_cleanup(const rclcpp_lifecycle::State &)
+{
+  subscription_.reset();
+  pub_fl_.reset();
+  pub_fr_.reset();
+  pub_rl_.reset();
+  pub_rr_.reset();
+  RCLCPP_INFO(get_logger(), "Cleaned up");
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+WheelSpeedsDispatcher::on_shutdown(const rclcpp_lifecycle::State &)
+{
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 void WheelSpeedsDispatcher::wheel_speeds_callback(
   const robot_interfaces::msg::WheelSpeeds::SharedPtr msg)
 {
-  auto publish_vec = [](const rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr & pub, double velocity) {
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
+
+  auto publish_vec = [](const rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr & pub, double velocity) {
     auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
-    out->data.push_back(velocity); // index 0: speed (rad/s)
-    out->data.push_back(1.0);      // index 1: current limit (dummy)
+    out->data.push_back(velocity);
+    out->data.push_back(1.0); // Dummy current limit
     pub->publish(std::move(out));
   };
 
@@ -58,42 +102,6 @@ void WheelSpeedsDispatcher::wheel_speeds_callback(
   publish_vec(pub_fr_, msg->front_right_velocity);
   publish_vec(pub_rl_, msg->rear_left_velocity);
   publish_vec(pub_rr_, msg->rear_right_velocity);
-}
-
-rcl_interfaces::msg::SetParametersResult WheelSpeedsDispatcher::on_parameter_event(
-  const std::vector<rclcpp::Parameter> & params)
-{
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "ok";
-
-  bool recreate_publishers = false;
-
-  for (const auto & param : params) {
-    const auto & name = param.get_name();
-    if (name == "front_left_topic") {
-      front_left_topic_ = param.as_string();
-      recreate_publishers = true;
-    } else if (name == "front_right_topic") {
-      front_right_topic_ = param.as_string();
-      recreate_publishers = true;
-    } else if (name == "rear_left_topic") {
-      rear_left_topic_ = param.as_string();
-      recreate_publishers = true;
-    } else if (name == "rear_right_topic") {
-      rear_right_topic_ = param.as_string();
-      recreate_publishers = true;
-    }
-  }
-
-  if (recreate_publishers) {
-    pub_fl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_left_topic_, rclcpp::SystemDefaultsQoS());
-    pub_fr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_right_topic_, rclcpp::SystemDefaultsQoS());
-    pub_rl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_left_topic_, rclcpp::SystemDefaultsQoS());
-    pub_rr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_right_topic_, rclcpp::SystemDefaultsQoS());
-  }
-
-  return result;
 }
 
 }  // namespace mecanum_kinematics
