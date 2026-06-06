@@ -1,5 +1,5 @@
-#ifndef ROBSTRIDE_DRIVER__ROBSTRIDE_MOTOR_NODE_HPP_
-#define ROBSTRIDE_DRIVER__ROBSTRIDE_MOTOR_NODE_HPP_
+#ifndef ROBSTRIDE_DRIVER__ROBSTRIDE_AT_NODE_HPP_
+#define ROBSTRIDE_DRIVER__ROBSTRIDE_AT_NODE_HPP_
 
 #include <memory>
 #include <string>
@@ -14,9 +14,9 @@
 
 namespace robstride_driver {
 
-class RobstrideMotorNode : public rclcpp_lifecycle::LifecycleNode {
+class RobstrideAtNode : public rclcpp_lifecycle::LifecycleNode {
  public:
-  explicit RobstrideMotorNode(const rclcpp::NodeOptions& options);
+  explicit RobstrideAtNode(const rclcpp::NodeOptions& options);
 
   // Lifecycle Transitions
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
@@ -70,4 +70,4 @@ class RobstrideMotorNode : public rclcpp_lifecycle::LifecycleNode {
 
 }  // namespace robstride_driver
 
-#endif  // ROBSTRIDE_DRIVER__ROBSTRIDE_MOTOR_NODE_HPP_
+#endif  // ROBSTRIDE_DRIVER__ROBSTRIDE_AT_NODE_HPP_

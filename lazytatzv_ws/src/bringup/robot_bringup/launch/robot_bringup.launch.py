@@ -7,6 +7,7 @@ from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 def launch_setup(context, *args, **kwargs):
+    # --- 1. SETTINGS & PATHS ---
     pkg_bringup = get_package_share_directory('robot_bringup')
     
     paths = {
@@ -48,7 +49,7 @@ def launch_setup(context, *args, **kwargs):
     # --- Setup Actuator Config ---
     if actuator_type == 'at':
         act_yaml = os.path.join(pkg_bringup, 'config', 'actuators_robstride.yaml')
-        m_pkg, m_plugin = 'robstride_driver', 'robstride_driver::RobstrideMotorNode'
+        m_pkg, m_plugin = 'robstride_driver', 'robstride_driver::RobstrideAtNode'
     elif actuator_type == 'can':
         act_yaml = os.path.join(pkg_bringup, 'config', 'actuators_robstride.yaml')
         m_pkg, m_plugin = 'robstride_driver', 'robstride_driver::RobstrideCanNode'

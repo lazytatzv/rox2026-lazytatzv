@@ -20,7 +20,7 @@ if(BUILD_TESTING)
 endif()
 
 add_library(robstride_motor_component SHARED
-  src/robstride_motor_node.cpp
+  src/robstride_at_node.cpp
   src/robstride_can_node.cpp
 )
 target_include_directories(robstride_motor_component PUBLIC
@@ -38,8 +38,8 @@ ament_target_dependencies(robstride_motor_component
 )
 
 rclcpp_components_register_node(robstride_motor_component
-  PLUGIN "robstride_driver::RobstrideMotorNode"
-  EXECUTABLE robstride_motor_node
+  PLUGIN "robstride_driver::RobstrideAtNode"
+  EXECUTABLE robstride_at_node
 )
 rclcpp_components_register_node(robstride_motor_component
   PLUGIN "robstride_driver::RobstrideCanNode"
