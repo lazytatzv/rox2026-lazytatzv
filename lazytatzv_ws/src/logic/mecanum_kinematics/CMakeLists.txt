@@ -15,6 +15,19 @@ find_package(std_msgs REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 
+# kinematics implementation (Internal library)
+add_library(mecanum_kinematics_kinematics SHARED
+  src/kinematics.cpp
+)
+target_include_directories(mecanum_kinematics_kinematics PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(mecanum_kinematics_kinematics
+  rclcpp
+)
+
+# Main component
 add_library(mecanum_kinematics_component SHARED
   src/mecanum_kinematics_node.cpp
   src/wheel_speeds_dispatcher.cpp
@@ -24,6 +37,7 @@ target_include_directories(mecanum_kinematics_component PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+# Crucial: Order and completeness for Jazzy/Humble
 ament_target_dependencies(mecanum_kinematics_component
   rclcpp
   rclcpp_lifecycle
@@ -37,18 +51,6 @@ ament_target_dependencies(mecanum_kinematics_component
   std_msgs
   robot_interfaces
   rcl_interfaces
-)
-
-# kinematics implementation
-add_library(mecanum_kinematics_kinematics SHARED
-  src/kinematics.cpp
-)
-target_include_directories(mecanum_kinematics_kinematics PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-ament_target_dependencies(mecanum_kinematics_kinematics
-  rclcpp
 )
 
 target_link_libraries(mecanum_kinematics_component

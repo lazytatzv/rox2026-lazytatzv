@@ -5,6 +5,7 @@
 #include <thread>
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "robot_interfaces/msg/serial_frame.hpp"
 
 namespace serial_gateway {

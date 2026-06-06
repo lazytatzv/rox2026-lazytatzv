@@ -1,6 +1,7 @@
 #include "mecanum_kinematics/mecanum_kinematics_node.hpp"
 #include "mecanum_kinematics/kinematics.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 

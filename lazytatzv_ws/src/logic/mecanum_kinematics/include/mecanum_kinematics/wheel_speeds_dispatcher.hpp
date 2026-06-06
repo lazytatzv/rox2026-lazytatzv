@@ -8,6 +8,7 @@
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "robot_interfaces/msg/wheel_speeds.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 
