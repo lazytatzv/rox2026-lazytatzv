@@ -3,6 +3,7 @@ project(serial_gateway)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
@@ -44,6 +45,4 @@ install(DIRECTORY include/
 )
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_package()
-GET)
 ament_package()
