@@ -6,6 +6,7 @@
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace base_teleop {
 
@@ -26,12 +27,14 @@ class BaseTeleopNode : public rclcpp::Node {
 
   // Publishers and subscriptions
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_command_velocity_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_stop_lock_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr subscription_joystick_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   // State
   geometry_msgs::msg::Twist current_twist_;
   geometry_msgs::msg::Twist target_twist_;
+  bool is_stopped_ = false;
 
   // Cached parameters (axis indices)
   int axis_forward_backward_ = 1;
@@ -39,6 +42,7 @@ class BaseTeleopNode : public rclcpp::Node {
   int axis_yaw_ = 2;
   int axis_deadman_translation_ = 5;
   int axis_deadman_rotation_ = 4;
+  int button_software_stop_ = 15; // DualSense Touchpad Click
 
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
@@ -48,6 +52,7 @@ class BaseTeleopNode : public rclcpp::Node {
   // Cached parameters (topics)
   std::string topic_joy_;
   std::string topic_cmd_vel_;
+  std::string topic_stop_lock_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
