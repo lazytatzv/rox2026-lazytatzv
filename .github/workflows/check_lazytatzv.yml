@@ -38,7 +38,7 @@ jobs:
         run: |
           docker run --rm lazytatzv:lint-${{ matrix.ros_distro }} bash -c "
             source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
-            colcon build --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --symlink-install && \
+            colcon build --symlink-install && \
             source install/setup.bash && \
             colcon test --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --event-handlers console_direct+ --ctest-args -R lint
           "
