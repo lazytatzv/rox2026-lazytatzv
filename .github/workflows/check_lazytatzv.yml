@@ -7,45 +7,39 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
-    name: Lint Check
+  style_fix:
+    name: Auto Format & Fix
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ros_distro: [jazzy, humble]
+    permissions:
+      contents: write # 自動コミットに必須
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image for Linting
-        uses: docker/build-push-action@v5
-        with:
-          context: ./lazytatzv_ws
-          file: ./lazytatzv_ws/Dockerfile
-          build-args: |
-            ROS_DISTRO=${{ matrix.ros_distro }}
-          load: true
-          tags: lazytatzv:lint-${{ matrix.ros_distro }}
-          cache-from: type=gha,scope=lint-${{ matrix.ros_distro }}
-          cache-to: type=gha,mode=max,scope=lint-${{ matrix.ros_distro }}
-
-      - name: Run Linting in Docker
+      - name: Run Auto-Formatter in Docker
         run: |
-          docker run --rm lazytatzv:lint-${{ matrix.ros_distro }} bash -c "
-            source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
-            colcon build --symlink-install && \
-            source install/setup.bash && \
-            colcon test --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --event-handlers console_direct+ --ctest-args -R lint
-          "
+          # 1. Dockerイメージをビルド
+          docker build -t lazytatzv:style-fixer ./lazytatzv_ws --build-arg ROS_DISTRO=jazzy
+          
+          # 2. 整形スクリプトを実行
+          docker run --rm -v ${{ github.workspace }}:/root/work -w /root/work lazytatzv:style-fixer \
+            bash -c "chmod +x lazytatzv_ws/fix_style.sh && ./lazytatzv_ws/fix_style.sh"
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: automatic code formatting by CI [skip ci]"
+          file_pattern: 'lazytatzv_ws/src/*'
 
   docker_build_test:
     name: Build & Test
-    needs: lint
+    needs: style_fix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -57,27 +51,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./lazytatzv_ws
-          file: ./lazytatzv_ws/Dockerfile
-          build-args: |
-            ROS_DISTRO=${{ matrix.ros_distro }}
-          load: true
-          tags: lazytatzv:test-${{ matrix.ros_distro }}
-          cache-from: type=gha,scope=test-${{ matrix.ros_distro }}
-          cache-to: type=gha,mode=max,scope=test-${{ matrix.ros_distro }}
-
-      - name: Run Build & Functional Tests
+      - name: Build and Test in Docker
         run: |
+          docker build -t lazytatzv:test-${{ matrix.ros_distro }} ./lazytatzv_ws --build-arg ROS_DISTRO=${{ matrix.ros_distro }}
           docker run --rm lazytatzv:test-${{ matrix.ros_distro }} bash -c "
             source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
-            colcon build --symlink-install --parallel-workers 2 --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+            colcon build --symlink-install --parallel-workers 2 && \
             source install/setup.bash && \
-            colcon test --event-handlers console_direct+ && \
-            colcon test-result --verbose
+            colcon test --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --event-handlers console_direct+ --ctest-args -R lint
           "
