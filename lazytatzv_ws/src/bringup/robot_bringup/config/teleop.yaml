@@ -12,6 +12,8 @@
     joy_axis_deadman_translation: 5
     joy_axis_deadman_rotation: 4
     joy_button_software_stop: 15
+    joy_button_joy_mode_on: 8
+    joy_button_joy_mode_off: 9
     scale_linear_velocity: 1.0
     scale_angular_velocity: 1.0
     smoothing_factor: 0.3

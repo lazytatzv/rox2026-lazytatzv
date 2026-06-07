@@ -28,8 +28,8 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
   parameter_callback_handle_ = this->add_on_set_parameters_callback(
       std::bind(&BaseTeleopNode::on_set_parameters_callback, this, std::placeholders::_1));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode [PRO] initialized: joy='%s' cmd_vel='%s' stop='%s'", 
-    topic_joy_.c_str(), topic_cmd_vel_.c_str(), topic_stop_lock_.c_str());
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode [JOYMODE] initialized: joy='%s' cmd_vel='%s'", 
+    topic_joy_.c_str(), topic_cmd_vel_.c_str());
 }
 
 void BaseTeleopNode::declare_parameters() {
@@ -39,6 +39,8 @@ void BaseTeleopNode::declare_parameters() {
   this->declare_parameter("joy_axis_deadman_translation", 5);
   this->declare_parameter("joy_axis_deadman_rotation", 4);
   this->declare_parameter("joy_button_software_stop", 15);
+  this->declare_parameter("joy_button_joy_mode_on", 8);
+  this->declare_parameter("joy_button_joy_mode_off", 9);
   this->declare_parameter("scale_linear_velocity", 1.0);
   this->declare_parameter("scale_angular_velocity", 1.0);
   this->declare_parameter("smoothing_factor", 0.3);
@@ -54,6 +56,8 @@ void BaseTeleopNode::cache_parameters() {
   axis_deadman_translation_ = this->get_parameter("joy_axis_deadman_translation").as_int();
   axis_deadman_rotation_ = this->get_parameter("joy_axis_deadman_rotation").as_int();
   button_software_stop_ = this->get_parameter("joy_button_software_stop").as_int();
+  button_joy_mode_on_ = this->get_parameter("joy_button_joy_mode_on").as_int();
+  button_joy_mode_off_ = this->get_parameter("joy_button_joy_mode_off").as_int();
   scale_linear_velocity_ = this->get_parameter("scale_linear_velocity").as_double();
   scale_angular_velocity_ = this->get_parameter("scale_angular_velocity").as_double();
   smoothing_factor_ = std::clamp(this->get_parameter("smoothing_factor").as_double(), 0.01, 1.0);
@@ -87,38 +91,53 @@ void BaseTeleopNode::timer_callback() {
 }
 
 void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr joystick_message) {
-  size_t required_axes = static_cast<size_t>(std::max({
-      axis_forward_backward_, axis_left_right_, axis_yaw_, 
-      axis_deadman_translation_, axis_deadman_rotation_}));
-  size_t required_buttons = static_cast<size_t>(button_software_stop_);
+  size_t required_buttons = static_cast<size_t>(std::max({
+      button_software_stop_, button_joy_mode_on_, button_joy_mode_off_}));
 
-  if (joystick_message->axes.size() <= required_axes || 
-      joystick_message->buttons.size() <= required_buttons) return;
+  if (joystick_message->buttons.size() <= required_buttons) return;
 
-  // Toggle Software Stop (Touchpad Click)
+  // 1. Emergency Software Stop Toggle (Touchpad)
   static bool last_stop_button_state = false;
   bool current_stop_button_state = (joystick_message->buttons[button_software_stop_] == 1);
-  
   if (current_stop_button_state && !last_stop_button_state) {
-    is_stopped_ = !is_stopped_; // Toggle
+    is_stopped_ = !is_stopped_;
     auto stop_msg = std::make_unique<std_msgs::msg::Bool>();
     stop_msg->data = is_stopped_;
     publisher_stop_lock_->publish(std::move(stop_msg));
-    
-    if (is_stopped_) {
-      RCLCPP_WARN(this->get_logger(), "SOFTWARE STOP ACTIVATED!");
-    } else {
-      RCLCPP_INFO(this->get_logger(), "Software Stop Released.");
-    }
+    if (is_stopped_) RCLCPP_WARN(get_logger(), "SOFTWARE STOP!");
+    else RCLCPP_INFO(get_logger(), "Software Stop Released.");
   }
   last_stop_button_state = current_stop_button_state;
 
-  if (is_stopped_) {
+  // 2. Joy Mode Transitions
+  // Create/Select -> ON
+  if (joystick_message->buttons[button_joy_mode_on_] == 1 && !joy_mode_active_) {
+    joy_mode_active_ = true;
+    is_stopped_ = false; // Force release stop when activating mode
+    auto stop_msg = std::make_unique<std_msgs::msg::Bool>();
+    stop_msg->data = false;
+    publisher_stop_lock_->publish(std::move(stop_msg));
+    RCLCPP_INFO(get_logger(), "ENTER TELEOP MODE (JoyMode: ON)");
+  }
+  // Options/Start -> OFF
+  if (joystick_message->buttons[button_joy_mode_off_] == 1 && joy_mode_active_) {
+    joy_mode_active_ = false;
+    RCLCPP_INFO(get_logger(), "EXIT TELEOP MODE (JoyMode: OFF)");
+  }
+
+  // 3. Command Processing
+  if (is_stopped_ || !joy_mode_active_) {
     target_twist_.linear.x = 0.0;
     target_twist_.linear.y = 0.0;
     target_twist_.angular.z = 0.0;
     return;
   }
+
+  // Normal teleop processing
+  size_t required_axes = static_cast<size_t>(std::max({
+      axis_forward_backward_, axis_left_right_, axis_yaw_, 
+      axis_deadman_translation_, axis_deadman_rotation_}));
+  if (joystick_message->axes.size() <= required_axes) return;
 
   bool is_translation_enabled = std::abs(joystick_message->axes[axis_deadman_translation_]) > 0.5;
   bool is_rotation_enabled = std::abs(joystick_message->axes[axis_deadman_rotation_]) > 0.5;
@@ -130,17 +149,16 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr jo
 
 rcl_interfaces::msg::SetParametersResult BaseTeleopNode::on_set_parameters_callback(
     const std::vector<rclcpp::Parameter>& parameters) {
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
   for (const auto& param : parameters) {
     if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER && param.as_int() < 0) {
+      rcl_interfaces::msg::SetParametersResult result;
       result.successful = false;
       result.reason = "Index must be >= 0";
       return result;
     }
   }
   cache_parameters();
-  return result;
+  return rcl_interfaces::msg::SetParametersResult();
 }
 
 }  // namespace base_teleop

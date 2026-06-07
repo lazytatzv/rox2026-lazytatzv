@@ -35,6 +35,7 @@ class BaseTeleopNode : public rclcpp::Node {
   geometry_msgs::msg::Twist current_twist_;
   geometry_msgs::msg::Twist target_twist_;
   bool is_stopped_ = false;
+  bool joy_mode_active_ = false;
 
   // Cached parameters (axis indices)
   int axis_forward_backward_ = 1;
@@ -42,7 +43,9 @@ class BaseTeleopNode : public rclcpp::Node {
   int axis_yaw_ = 2;
   int axis_deadman_translation_ = 5;
   int axis_deadman_rotation_ = 4;
-  int button_software_stop_ = 15; // DualSense Touchpad Click
+  int button_software_stop_ = 15; // Touchpad Click
+  int button_joy_mode_on_ = 8;    // Create (Select)
+  int button_joy_mode_off_ = 9;   // Options (Start)
 
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
