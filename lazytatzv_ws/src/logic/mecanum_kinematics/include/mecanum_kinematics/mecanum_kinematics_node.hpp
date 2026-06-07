@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #ifndef MECANUM_KINEMATICS__MECANUM_KINEMATICS_NODE_HPP_
 #define MECANUM_KINEMATICS__MECANUM_KINEMATICS_NODE_HPP_
 
@@ -15,11 +16,12 @@
 #include "robot_interfaces/msg/wheel_speeds.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
-namespace mecanum_kinematics {
+namespace mecanum_kinematics
+{
 
 class MecanumKinematicsNode : public rclcpp_lifecycle::LifecycleNode {
- public:
-  explicit MecanumKinematicsNode(const rclcpp::NodeOptions& options);
+public:
+  explicit MecanumKinematicsNode(const rclcpp::NodeOptions & options);
 
   // Lifecycle Transitions
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
@@ -37,10 +39,10 @@ class MecanumKinematicsNode : public rclcpp_lifecycle::LifecycleNode {
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_shutdown(const rclcpp_lifecycle::State & state) override;
 
- private:
+private:
   void command_velocity_callback(const geometry_msgs::msg::Twist::SharedPtr twist_message);
   void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
-  
+
   void declare_parameters();
   void update_parameters();
 
@@ -60,15 +62,16 @@ class MecanumKinematicsNode : public rclcpp_lifecycle::LifecycleNode {
   std::string topic_wheel_speeds_;
 
   // Lifecycle Publishers
-  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::WheelSpeeds>::SharedPtr publisher_wheel_speeds_;
+  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::WheelSpeeds>::SharedPtr
+    publisher_wheel_speeds_;
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Odometry>::SharedPtr publisher_odom_;
-  
+
   // Subscriptions
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_command_velocity_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscription_joint_states_;
 
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  
+
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 

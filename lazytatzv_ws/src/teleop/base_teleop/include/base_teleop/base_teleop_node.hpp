@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #ifndef BASE_TELEOP__BASE_TELEOP_NODE_HPP_
 #define BASE_TELEOP__BASE_TELEOP_NODE_HPP_
 
@@ -7,13 +8,14 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-namespace base_teleop {
+namespace base_teleop
+{
 
 class BaseTeleopNode : public rclcpp::Node {
- public:
-  explicit BaseTeleopNode(const rclcpp::NodeOptions& options);
+public:
+  explicit BaseTeleopNode(const rclcpp::NodeOptions & options);
 
- private:
+private:
   void joystick_callback(const sensor_msgs::msg::Joy::SharedPtr joystick_message);
   void declare_parameters();
   void cache_parameters();

@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include <algorithm>
 #include <cmath>
 
@@ -23,7 +24,8 @@ TEST(KinematicsTest, RotationOnly)
   EXPECT_NEAR(out[3], +(0.12 + 0.10) / 0.05, 1e-9);
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv)
+{
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

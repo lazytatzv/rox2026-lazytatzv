@@ -14,7 +14,7 @@
     # "can" ==> Usb-to-can analyzerを使った制御
     # "ddsm" ==> DDSM115を使った制御(ROX2026では使わないがテスト用)
     actuator_type: "at"
-    
+
     half_length: 0.12
     half_width: 0.10
     wheel_radius: 0.05

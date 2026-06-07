@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include <gtest/gtest.h>
 #include "robstride_driver/at_protocol.hpp"
 #include <vector>
@@ -10,7 +11,8 @@ TEST(ProtocolTest, ConstantsVerification) {
     EXPECT_EQ(NEUTRAL_VELOCITY_VALUE, 32767);
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv)
+{
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

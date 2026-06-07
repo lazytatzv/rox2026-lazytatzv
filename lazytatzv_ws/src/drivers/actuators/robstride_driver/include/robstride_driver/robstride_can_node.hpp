@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #ifndef ROBSTRIDE_DRIVER__ROBSTRIDE_CAN_NODE_HPP_
 #define ROBSTRIDE_DRIVER__ROBSTRIDE_CAN_NODE_HPP_
 
@@ -12,11 +13,12 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "seeed_usb_can_analyzer_driver/msg/can_frame.hpp"
 
-namespace robstride_driver {
+namespace robstride_driver
+{
 
 class RobstrideCanNode : public rclcpp_lifecycle::LifecycleNode {
- public:
-  explicit RobstrideCanNode(const rclcpp::NodeOptions& options);
+public:
+  explicit RobstrideCanNode(const rclcpp::NodeOptions & options);
 
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_configure(const rclcpp_lifecycle::State & state) override;
@@ -30,10 +32,10 @@ class RobstrideCanNode : public rclcpp_lifecycle::LifecycleNode {
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_cleanup(const rclcpp_lifecycle::State & state) override;
 
- private:
+private:
   void velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message);
   void can_rx_callback(const seeed_usb_can_analyzer_driver::msg::CanFrame::SharedPtr message);
-  
+
   double uint_to_float(uint16_t value, double low, double high);
   uint16_t float_to_uint(double value, double low, double high);
 
@@ -48,8 +50,10 @@ class RobstrideCanNode : public rclcpp_lifecycle::LifecycleNode {
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
   rclcpp::Subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr subscription_can_rx_;
 
-  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr publisher_can_tx_;
-  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr publisher_joint_state_;
+  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr
+    publisher_can_tx_;
+  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr
+    publisher_joint_state_;
 };
 
 }  // namespace robstride_driver

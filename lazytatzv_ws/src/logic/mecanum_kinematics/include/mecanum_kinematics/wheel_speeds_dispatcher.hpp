@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #ifndef MECANUM_KINEMATICS__WHEEL_SPEEDS_DISPATCHER_HPP_
 #define MECANUM_KINEMATICS__WHEEL_SPEEDS_DISPATCHER_HPP_
 
@@ -12,10 +13,11 @@
 #include "robot_interfaces/msg/wheel_speeds.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 
-namespace mecanum_kinematics {
+namespace mecanum_kinematics
+{
 
 class WheelSpeedsDispatcher : public rclcpp_lifecycle::LifecycleNode {
- public:
+public:
   explicit WheelSpeedsDispatcher(const rclcpp::NodeOptions & options);
 
   // Lifecycle Transitions
@@ -34,7 +36,7 @@ class WheelSpeedsDispatcher : public rclcpp_lifecycle::LifecycleNode {
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_shutdown(const rclcpp_lifecycle::State & state) override;
 
- private:
+private:
   void wheel_speeds_callback(const robot_interfaces::msg::WheelSpeeds::SharedPtr msg);
   void declare_parameters();
 
@@ -44,12 +46,12 @@ class WheelSpeedsDispatcher : public rclcpp_lifecycle::LifecycleNode {
   std::string rear_right_topic_;
 
   rclcpp::Subscription<robot_interfaces::msg::WheelSpeeds>::SharedPtr subscription_;
-  
+
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_fl_;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_fr_;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_rl_;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_rr_;
-  
+
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 

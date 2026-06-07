@@ -1,11 +1,14 @@
+// Copyright 2026 Tatsukiyano
 #ifndef ROBSTRIDE_DRIVER__AT_PROTOCOL_HPP_
 #define ROBSTRIDE_DRIVER__AT_PROTOCOL_HPP_
 
 #include <cstdint>
 
-namespace robstride_driver {
+namespace robstride_driver
+{
 
-namespace at_protocol {
+namespace at_protocol
+{
 
 // --- AT Frame Structure Constants ---
 static constexpr uint8_t FRAME_HEADER_A = 0x41; // 'A'

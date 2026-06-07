@@ -13,16 +13,19 @@
 
 using namespace std::chrono_literals;
 
-namespace serial_gateway {
+namespace serial_gateway
+{
 
 SerialGateway::SerialGateway(const rclcpp::NodeOptions & options)
-    : rclcpp_lifecycle::LifecycleNode("serial_gateway", options) {
+: rclcpp_lifecycle::LifecycleNode("serial_gateway", options)
+{
   this->declare_parameter("serial_port", "/dev/ttyUSB1");
   this->declare_parameter("baud_rate", 921600);
   this->declare_parameter("reconnect_interval_ms", 2000);
 }
 
-SerialGateway::~SerialGateway() {
+SerialGateway::~SerialGateway()
+{
   if (io_context_) {
     io_context_->stop();
   }
@@ -32,7 +35,8 @@ SerialGateway::~SerialGateway() {
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-SerialGateway::on_configure(const rclcpp_lifecycle::State &) {
+SerialGateway::on_configure(const rclcpp_lifecycle::State &)
+{
   diagnostic_updater_ = std::make_unique<diagnostic_updater::Updater>(this);
   diagnostic_updater_->setHardwareID("Serial Bus");
   diagnostic_updater_->add("Connection Status", this, &SerialGateway::produce_diagnostics);
@@ -48,7 +52,8 @@ SerialGateway::on_configure(const rclcpp_lifecycle::State &) {
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-SerialGateway::on_activate(const rclcpp_lifecycle::State &) {
+SerialGateway::on_activate(const rclcpp_lifecycle::State &)
+{
   publisher_rx_frames_->on_activate();
 
   // Start recovery timer
@@ -75,7 +80,8 @@ SerialGateway::on_activate(const rclcpp_lifecycle::State &) {
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-SerialGateway::on_deactivate(const rclcpp_lifecycle::State &) {
+SerialGateway::on_deactivate(const rclcpp_lifecycle::State &)
+{
   reconnect_timer_.reset();
   publisher_rx_frames_->on_deactivate();
   RCLCPP_INFO(get_logger(), "Deactivated");
@@ -83,7 +89,8 @@ SerialGateway::on_deactivate(const rclcpp_lifecycle::State &) {
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-SerialGateway::on_cleanup(const rclcpp_lifecycle::State &) {
+SerialGateway::on_cleanup(const rclcpp_lifecycle::State &)
+{
   if (io_context_) {
     io_context_->stop();
   }
@@ -100,11 +107,13 @@ SerialGateway::on_cleanup(const rclcpp_lifecycle::State &) {
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-SerialGateway::on_shutdown(const rclcpp_lifecycle::State &) {
+SerialGateway::on_shutdown(const rclcpp_lifecycle::State &)
+{
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
-bool SerialGateway::init_serial_port() {
+bool SerialGateway::init_serial_port()
+{
   std::string port_path = this->get_parameter("serial_port").as_string();
   int baud_rate = this->get_parameter("baud_rate").as_int();
 
@@ -119,7 +128,8 @@ bool SerialGateway::init_serial_port() {
     serial_port_->set_option(
       boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
     serial_port_->set_option(
-      boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
+      boost::asio::serial_port_base::flow_control(
+        boost::asio::serial_port_base::flow_control::none));
 
     is_connected_ = true;
     last_error_ = "None";
@@ -135,7 +145,8 @@ bool SerialGateway::init_serial_port() {
   }
 }
 
-void SerialGateway::try_reconnect() {
+void SerialGateway::try_reconnect()
+{
   if (is_connected_) {
     // Check if port is actually still alive
     if (!serial_port_ || !serial_port_->is_open()) {
@@ -151,7 +162,8 @@ void SerialGateway::try_reconnect() {
   }
 }
 
-void SerialGateway::start_async_read() {
+void SerialGateway::start_async_read()
+{
   if (!is_connected_) {
     return;
   }
@@ -162,7 +174,8 @@ void SerialGateway::start_async_read() {
       if (!ec) {
         rx_count_++;
         if (this->get_current_state().id() ==
-          lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+        lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+        {
           auto msg = std::make_unique<robot_interfaces::msg::SerialFrame>();
           std::istream is(&read_buffer_);
           msg->frame_data.resize(bytes_transferred);
@@ -179,12 +192,14 @@ void SerialGateway::start_async_read() {
 }
 
 void SerialGateway::serial_frame_callback(
-  const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+  const robot_interfaces::msg::SerialFrame::SharedPtr message)
+{
   if (!is_connected_) {
     return;
   }
   if (this->get_current_state().id() !=
-    lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+  {
     return;
   }
 
@@ -200,7 +215,8 @@ void SerialGateway::serial_frame_callback(
     });
 }
 
-void SerialGateway::produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat) {
+void SerialGateway::produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
   if (is_connected_) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Connected");
   } else {

@@ -1,10 +1,12 @@
+// Copyright 2026 Tatsukiyano
 #include "mecanum_kinematics/kinematics.hpp"
 #include <algorithm>
 #include <cmath>
 
 // Pure Kinematics computations for mecanum wheels.
 
-namespace mecanum_kinematics {
+namespace mecanum_kinematics
+{
 
 std::array<double, 4> compute_wheel_speeds(
   double linear_x,
@@ -27,7 +29,7 @@ std::array<double, 4> compute_wheel_speeds(
 }
 
 std::array<double, 3> compute_body_twist(
-  const std::array<double, 4>& wheel_speeds,
+  const std::array<double, 4> & wheel_speeds,
   double half_length,
   double half_width,
   double wheel_radius)

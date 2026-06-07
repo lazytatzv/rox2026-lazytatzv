@@ -15,10 +15,11 @@
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "robot_interfaces/msg/serial_frame.hpp"
 
-namespace serial_gateway {
+namespace serial_gateway
+{
 
 class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
- public:
+public:
   explicit SerialGateway(const rclcpp::NodeOptions & options);
   virtual ~SerialGateway();
 
@@ -37,7 +38,7 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_shutdown(const rclcpp_lifecycle::State & state) override;
 
- private:
+private:
   void serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message);
   bool init_serial_port();
   void start_async_read();
@@ -64,7 +65,7 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
 
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_frames_;
   rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr
-  publisher_rx_frames_;
+    publisher_rx_frames_;
 };
 
 }  // namespace serial_gateway

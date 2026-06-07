@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include "base_teleop/base_teleop_node.hpp"
 #include <algorithm>
 #include <chrono>
@@ -5,11 +6,13 @@
 
 using namespace std::chrono_literals;
 
-namespace base_teleop {
+namespace base_teleop
+{
 
-BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options) 
-: Node("base_teleop_node", options) {
-  
+BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions & options)
+: Node("base_teleop_node", options)
+{
+
   declare_parameters();
   cache_parameters();
 
@@ -18,9 +21,9 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   publisher_stop_lock_ = this->create_publisher<std_msgs::msg::Bool>(
       topic_stop_lock_, rclcpp::SystemDefaultsQoS());
-  
+
   subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
-    topic_joy_, rclcpp::SensorDataQoS(), 
+    topic_joy_, rclcpp::SensorDataQoS(),
     std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
@@ -28,7 +31,8 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
   RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized with parameters.");
 }
 
-void BaseTeleopNode::declare_parameters() {
+void BaseTeleopNode::declare_parameters()
+{
   this->declare_parameter("joy_axis_forward_backward", 1);
   this->declare_parameter("joy_axis_left_right", 0);
   this->declare_parameter("joy_axis_yaw", 2);
@@ -42,7 +46,8 @@ void BaseTeleopNode::declare_parameters() {
   this->declare_parameter("topic_stop_lock", "stop_lock");
 }
 
-void BaseTeleopNode::cache_parameters() {
+void BaseTeleopNode::cache_parameters()
+{
   axis_forward_backward_ = this->get_parameter("joy_axis_forward_backward").as_int();
   axis_left_right_ = this->get_parameter("joy_axis_left_right").as_int();
   axis_yaw_ = this->get_parameter("joy_axis_yaw").as_int();
@@ -56,23 +61,25 @@ void BaseTeleopNode::cache_parameters() {
   topic_stop_lock_ = this->get_parameter("topic_stop_lock").as_string();
 }
 
-void BaseTeleopNode::timer_callback() {
+void BaseTeleopNode::timer_callback()
+{
   auto smooth = [this](double current, double target) {
-    return current + smoothing_factor_ * (target - current);
-  };
+      return current + smoothing_factor_ * (target - current);
+    };
 
   current_twist_.linear.x = smooth(current_twist_.linear.x, target_twist_.linear.x);
   current_twist_.linear.y = smooth(current_twist_.linear.y, target_twist_.linear.y);
   current_twist_.angular.z = smooth(current_twist_.angular.z, target_twist_.angular.z);
 
-  auto apply_deadband = [](double val) { return (std::abs(val) < 0.001) ? 0.0 : val; };
+  auto apply_deadband = [](double val) {return (std::abs(val) < 0.001) ? 0.0 : val;};
   current_twist_.linear.x = apply_deadband(current_twist_.linear.x);
   current_twist_.linear.y = apply_deadband(current_twist_.linear.y);
   current_twist_.angular.z = apply_deadband(current_twist_.angular.z);
 
   static bool was_moving = false;
-  bool is_moving = (current_twist_.linear.x != 0.0 || current_twist_.linear.y != 0.0 || current_twist_.angular.z != 0.0);
-  
+  bool is_moving = (current_twist_.linear.x != 0.0 || current_twist_.linear.y != 0.0 ||
+    current_twist_.angular.z != 0.0);
+
   if (is_moving || was_moving) {
     auto msg = std::make_unique<geometry_msgs::msg::Twist>(current_twist_);
     publisher_command_velocity_->publish(std::move(msg));
@@ -80,9 +87,10 @@ void BaseTeleopNode::timer_callback() {
   was_moving = is_moving;
 }
 
-void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg) {
+void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
   size_t req_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
-  if (msg->buttons.size() <= req_buttons) return;
+  if (msg->buttons.size() <= req_buttons) {return;}
 
   // --- 1. STOP (Touchpad) ---
   static bool last_stop_state = false;
@@ -112,8 +120,9 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr ms
     return;
   }
 
-  size_t req_axes = static_cast<size_t>(std::max({axis_forward_backward_, axis_left_right_, axis_yaw_}));
-  if (msg->axes.size() <= req_axes) return;
+  size_t req_axes = static_cast<size_t>(std::max({axis_forward_backward_, axis_left_right_,
+      axis_yaw_}));
+  if (msg->axes.size() <= req_axes) {return;}
 
   // 常にスティック入力を反映（デッドマン廃止）
   target_twist_.linear.x = msg->axes[axis_forward_backward_] * scale_linear_velocity_;

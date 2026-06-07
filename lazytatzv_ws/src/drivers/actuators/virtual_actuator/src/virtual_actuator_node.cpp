@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include <chrono>
 #include <cmath>
 #include <memory>
@@ -11,27 +12,31 @@
 
 using namespace std::chrono_literals;
 
-namespace virtual_actuator {
+namespace virtual_actuator
+{
 
 class VirtualActuatorNode : public rclcpp_lifecycle::LifecycleNode {
- public:
-  explicit VirtualActuatorNode(const rclcpp::NodeOptions& options)
-      : rclcpp_lifecycle::LifecycleNode("virtual_motor", options) {
+public:
+  explicit VirtualActuatorNode(const rclcpp::NodeOptions & options)
+  : rclcpp_lifecycle::LifecycleNode("virtual_motor", options)
+  {
     this->declare_parameter("joint_name", "virtual_joint");
     this->declare_parameter("publish_rate_hz", 50.0);
   }
 
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_configure(const rclcpp_lifecycle::State &) override {
+  on_configure(const rclcpp_lifecycle::State &) override
+  {
     joint_name_ = this->get_parameter("joint_name").as_string();
     double hz = this->get_parameter("publish_rate_hz").as_double();
 
-    publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", 10);
-    
+    publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states",
+        10);
+
     subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
         "~/velocity_command", 10,
-        [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
-          if (!msg->data.empty()) target_velocity_ = msg->data[0];
+      [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+        if (!msg->data.empty()) {target_velocity_ = msg->data[0];}
         });
 
     timer_ = this->create_wall_timer(
@@ -43,7 +48,8 @@ class VirtualActuatorNode : public rclcpp_lifecycle::LifecycleNode {
   }
 
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_activate(const rclcpp_lifecycle::State &) override {
+  on_activate(const rclcpp_lifecycle::State &) override
+  {
     publisher_joint_state_->on_activate();
     last_time_ = this->now();
     RCLCPP_INFO(get_logger(), "Virtual Motor [%s] Activated", joint_name_.c_str());
@@ -51,15 +57,17 @@ class VirtualActuatorNode : public rclcpp_lifecycle::LifecycleNode {
   }
 
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_deactivate(const rclcpp_lifecycle::State &) override {
+  on_deactivate(const rclcpp_lifecycle::State &) override
+  {
     publisher_joint_state_->on_deactivate();
     target_velocity_ = 0.0;
     current_velocity_ = 0.0;
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
   }
 
- private:
-  void timer_callback() {
+private:
+  void timer_callback()
+  {
     auto now = this->now();
     double dt = (now - last_time_).seconds();
     last_time_ = now;
@@ -83,10 +91,11 @@ class VirtualActuatorNode : public rclcpp_lifecycle::LifecycleNode {
   double target_velocity_ = 0.0;
   double current_velocity_ = 0.0;
   double current_position_ = 0.0;
-  
+
   rclcpp::Time last_time_;
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr publisher_joint_state_;
+  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr
+    publisher_joint_state_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
 };
 

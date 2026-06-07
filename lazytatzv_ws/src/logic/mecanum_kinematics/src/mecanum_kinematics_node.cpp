@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include "mecanum_kinematics/mecanum_kinematics_node.hpp"
 #include "mecanum_kinematics/kinematics.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -9,7 +10,8 @@
 #include <vector>
 #include <cmath>
 
-namespace mecanum_kinematics {
+namespace mecanum_kinematics
+{
 
 MecanumKinematicsNode::MecanumKinematicsNode(const rclcpp::NodeOptions & options)
 : rclcpp_lifecycle::LifecycleNode("mecanum_kinematics_node", options)
@@ -39,7 +41,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State &)
 {
   update_parameters();
-  
+
   publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
     topic_wheel_speeds_, rclcpp::SystemDefaultsQoS());
 
@@ -58,9 +60,9 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State &)
 
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s'", 
+  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s'",
     topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str());
-    
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -106,7 +108,7 @@ MecanumKinematicsNode::on_shutdown(const rclcpp_lifecycle::State &)
 void MecanumKinematicsNode::command_velocity_callback(
   const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-  if (!publisher_wheel_speeds_->is_activated()) return;
+  if (!publisher_wheel_speeds_->is_activated()) {return;}
 
   const auto wheels = mecanum_kinematics::compute_wheel_speeds(
     msg->linear.x, msg->linear.y, msg->angular.z,
@@ -123,7 +125,7 @@ void MecanumKinematicsNode::command_velocity_callback(
 
 void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
-  if (!publisher_odom_->is_activated()) return;
+  if (!publisher_odom_->is_activated()) {return;}
 
   // We need all 4 wheels to compute body twist
   // Mapping JointState to wheel order: FL, FR, RL, RR
@@ -131,13 +133,18 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
   int found_count = 0;
 
   for (size_t i = 0; i < msg->name.size(); ++i) {
-    if (msg->name[i] == "front_left_wheel_joint") { wheel_speeds[0] = msg->velocity[i]; found_count++; }
-    else if (msg->name[i] == "front_right_wheel_joint") { wheel_speeds[1] = msg->velocity[i]; found_count++; }
-    else if (msg->name[i] == "rear_left_wheel_joint") { wheel_speeds[2] = msg->velocity[i]; found_count++; }
-    else if (msg->name[i] == "rear_right_wheel_joint") { wheel_speeds[3] = msg->velocity[i]; found_count++; }
+    if (msg->name[i] == "front_left_wheel_joint") {
+      wheel_speeds[0] = msg->velocity[i]; found_count++;
+    } else if (msg->name[i] == "front_right_wheel_joint") {
+      wheel_speeds[1] = msg->velocity[i]; found_count++;
+    } else if (msg->name[i] == "rear_left_wheel_joint") {
+      wheel_speeds[2] = msg->velocity[i]; found_count++;
+    } else if (msg->name[i] == "rear_right_wheel_joint") {
+      wheel_speeds[3] = msg->velocity[i]; found_count++;
+    }
   }
 
-  if (found_count < 4) return;
+  if (found_count < 4) {return;}
 
   // Forward Kinematics
   const auto twist = mecanum_kinematics::compute_body_twist(
