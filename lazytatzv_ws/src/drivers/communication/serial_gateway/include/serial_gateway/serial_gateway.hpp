@@ -43,7 +43,8 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   std::thread io_thread_;
 
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_frames_;
-  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr publisher_rx_frames_;
+  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr
+    publisher_rx_frames_;
 };
 
 }  // namespace serial_gateway
