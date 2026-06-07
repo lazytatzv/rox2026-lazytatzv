@@ -12,7 +12,6 @@ namespace base_teleop {
 
 class BaseTeleopNode : public rclcpp::Node {
  public:
-  // prevent implicit conversion
   explicit BaseTeleopNode(const rclcpp::NodeOptions& options);
 
  private:
@@ -20,7 +19,6 @@ class BaseTeleopNode : public rclcpp::Node {
   rcl_interfaces::msg::SetParametersResult on_set_parameters_callback(
       const std::vector<rclcpp::Parameter>& parameters);
 
-  // init parameters
   void declare_parameters();
   void cache_parameters();
   void timer_callback();
@@ -34,8 +32,7 @@ class BaseTeleopNode : public rclcpp::Node {
   // State
   geometry_msgs::msg::Twist current_twist_;
   geometry_msgs::msg::Twist target_twist_;
-  bool is_stopped_ = false;
-  bool joy_mode_active_ = false;
+  bool joy_mode_active_ = false; // Binary state: True = Drive, False = Stop/Lock
 
   // Cached parameters (axis indices)
   int axis_forward_backward_ = 1;
@@ -45,12 +42,11 @@ class BaseTeleopNode : public rclcpp::Node {
   int axis_deadman_rotation_ = 4;
   int button_software_stop_ = 15; // Touchpad Click
   int button_joy_mode_on_ = 8;    // Create (Select)
-  int button_joy_mode_off_ = 9;   // Options (Start)
 
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
   double scale_angular_velocity_ = 1.0;
-  double smoothing_factor_ = 0.3; // Lower is smoother
+  double smoothing_factor_ = 0.3;
 
   // Cached parameters (topics)
   std::string topic_joy_;
