@@ -96,36 +96,44 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr jo
 
   if (joystick_message->buttons.size() <= required_buttons) return;
 
-  // 1. Emergency Software Stop Toggle (Touchpad)
+  // --- 1. EMERGENCY STOP (Touchpad) ---
+  // Pressing the Large button forces STOP and exits JoyMode
   static bool last_stop_button_state = false;
   bool current_stop_button_state = (joystick_message->buttons[button_software_stop_] == 1);
   if (current_stop_button_state && !last_stop_button_state) {
-    is_stopped_ = !is_stopped_;
+    is_stopped_ = true;
+    joy_mode_active_ = false; // Forced exit
     auto stop_msg = std::make_unique<std_msgs::msg::Bool>();
-    stop_msg->data = is_stopped_;
+    stop_msg->data = true;
     publisher_stop_lock_->publish(std::move(stop_msg));
-    if (is_stopped_) RCLCPP_WARN(get_logger(), "SOFTWARE STOP!");
-    else RCLCPP_INFO(get_logger(), "Software Stop Released.");
+    RCLCPP_WARN(get_logger(), "EMERGENCY STOP MODE ACTIVATED! (Press SELECT to resume)");
   }
   last_stop_button_state = current_stop_button_state;
 
-  // 2. Joy Mode Transitions
-  // Create/Select -> ON
-  if (joystick_message->buttons[button_joy_mode_on_] == 1 && !joy_mode_active_) {
+  // --- 2. RESUME / JOY MODE (Select) ---
+  // Pressing Select releases STOP and enters JoyMode
+  static bool last_joy_on_button_state = false;
+  bool current_joy_on_button_state = (joystick_message->buttons[button_joy_mode_on_] == 1);
+  if (current_joy_on_button_state && !last_joy_on_button_state) {
+    is_stopped_ = false;
     joy_mode_active_ = true;
-    is_stopped_ = false; // Force release stop when activating mode
     auto stop_msg = std::make_unique<std_msgs::msg::Bool>();
     stop_msg->data = false;
     publisher_stop_lock_->publish(std::move(stop_msg));
-    RCLCPP_INFO(get_logger(), "ENTER TELEOP MODE (JoyMode: ON)");
+    RCLCPP_INFO(get_logger(), "JOY MODE ACTIVE (Software Stop Released)");
   }
-  // Options/Start -> OFF
-  if (joystick_message->buttons[button_joy_mode_off_] == 1 && joy_mode_active_) {
-    joy_mode_active_ = false;
-    RCLCPP_INFO(get_logger(), "EXIT TELEOP MODE (JoyMode: OFF)");
-  }
+  last_joy_on_button_state = current_joy_on_button_state;
 
-  // 3. Command Processing
+  // --- 3. STANDBY (Options) ---
+  static bool last_joy_off_button_state = false;
+  bool current_joy_off_button_state = (joystick_message->buttons[button_joy_mode_off_] == 1);
+  if (current_joy_off_button_state && !last_joy_off_button_state) {
+    joy_mode_active_ = false;
+    RCLCPP_INFO(get_logger(), "STANDBY MODE (JoyMode: OFF)");
+  }
+  last_joy_off_button_state = current_joy_off_button_state;
+
+  // --- 4. COMMAND PROCESSING ---
   if (is_stopped_ || !joy_mode_active_) {
     target_twist_.linear.x = 0.0;
     target_twist_.linear.y = 0.0;
