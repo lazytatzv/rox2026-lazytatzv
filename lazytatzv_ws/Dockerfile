@@ -10,16 +10,17 @@ ENV WORKSPACE=/root/lazytatzv_ws
 ENV CCACHE_DIR=/root/.ccache
 WORKDIR $WORKSPACE
 
-# 1. Install System Utilities & ccache
+# 1. Install System Utilities, Linter Tools, and ccache
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git python3-colcon-common-extensions \
     python3-pip python3-rosdep python3-vcstool \
     evtest libboost-all-dev ccache \
     ros-${ROS_DISTRO}-teleop-twist-joy \
+    ros-${ROS_DISTRO}-ament-uncrustify \
+    black \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Layer Optimization: Install dependencies first (based only on package.xml)
-# This allows code changes without re-running rosdep install
+# 2. Layer Optimization: Install dependencies first
 COPY ./src /tmp/src
 RUN apt-get update && \
     rosdep update --include-eol-distros && \

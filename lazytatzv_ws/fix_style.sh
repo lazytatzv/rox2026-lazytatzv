@@ -9,10 +9,6 @@ echo "[STYLE] Running Uncrustify reformat..."
 ament_uncrustify --reformat lazytatzv_ws/src || true
 
 # 2. Python Formatting (Black)
-# Install black if not present
-if ! command -v black &> /dev/null; then
-    pip3 install black --quiet
-fi
 echo "[STYLE] Running Black (Python) reformat..."
 black lazytatzv_ws/src --line-length 100 --quiet || true
 
@@ -20,6 +16,7 @@ black lazytatzv_ws/src --line-length 100 --quiet || true
 echo "[STYLE] Ensuring Copyright headers..."
 find lazytatzv_ws/src -name "*.cpp" -o -name "*.hpp" -o -name "*.py" | while read -r file; do
     if ! grep -q "Copyright" "$file"; then
+        # C++/Python common comment style for copyright
         sed -i '1i // Copyright 2026 Tatsukiyano' "$file"
     fi
 done
