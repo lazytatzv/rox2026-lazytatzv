@@ -25,7 +25,7 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode [究極シンプル] 起動成功");
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized with parameters.");
 }
 
 void BaseTeleopNode::declare_parameters() {

@@ -9,7 +9,9 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(robot_interfaces REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -35,6 +37,7 @@ ament_target_dependencies(robstride_motor_component
   sensor_msgs
   seeed_usb_can_analyzer_driver
   robot_interfaces
+  diagnostic_updater
 )
 
 rclcpp_components_register_node(robstride_motor_component

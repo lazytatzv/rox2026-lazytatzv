@@ -6,6 +6,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(robot_interfaces REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 add_library(serial_gateway_component SHARED
@@ -21,6 +22,7 @@ ament_target_dependencies(serial_gateway_component
   rclcpp_lifecycle
   rclcpp_components
   robot_interfaces
+  diagnostic_updater
 )
 target_link_libraries(serial_gateway_component
   ${Boost_LIBRARIES}

@@ -14,6 +14,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(robot_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 # kinematics implementation (Internal library)
 add_library(mecanum_kinematics_kinematics SHARED
@@ -51,6 +52,7 @@ ament_target_dependencies(mecanum_kinematics_component
   std_msgs
   robot_interfaces
   rcl_interfaces
+  diagnostic_updater
 )
 
 target_link_libraries(mecanum_kinematics_component
