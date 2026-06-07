@@ -24,10 +24,10 @@ jobs:
 
       - name: Run Auto-Formatter in Docker
         run: |
-          # 1. Dockerイメージをビルド
-          docker build -t lazytatzv:style-fixer ./lazytatzv_ws --build-arg ROS_DISTRO=jazzy
+          # 1. Build using the isolated configuration
+          docker build -t lazytatzv:style-fixer -f ./lazytatzv_ws/Dockerfile . --build-arg ROS_DISTRO=jazzy
           
-          # 2. 整形スクリプトを実行
+          # 2. Run formatting script (now located in lazytatzv_ws)
           docker run --rm -v ${{ github.workspace }}:/root/work -w /root/work lazytatzv:style-fixer \
             bash -c "chmod +x lazytatzv_ws/fix_style.sh && ./lazytatzv_ws/fix_style.sh"
 
@@ -53,7 +53,7 @@ jobs:
 
       - name: Build and Test in Docker
         run: |
-          docker build -t lazytatzv:test-${{ matrix.ros_distro }} ./lazytatzv_ws --build-arg ROS_DISTRO=${{ matrix.ros_distro }}
+          docker build -t lazytatzv:test-${{ matrix.ros_distro }} -f ./lazytatzv_ws/Dockerfile . --build-arg ROS_DISTRO=${{ matrix.ros_distro }}
           docker run --rm lazytatzv:test-${{ matrix.ros_distro }} bash -c "
             source /opt/ros/${{ matrix.ros_distro }}/setup.bash && \
             colcon build --symlink-install --parallel-workers 2 && \
