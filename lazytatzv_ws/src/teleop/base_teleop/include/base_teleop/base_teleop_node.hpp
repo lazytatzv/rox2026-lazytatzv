@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
-#include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -16,9 +15,6 @@ class BaseTeleopNode : public rclcpp::Node {
 
  private:
   void joystick_callback(const sensor_msgs::msg::Joy::SharedPtr joystick_message);
-  rcl_interfaces::msg::SetParametersResult on_set_parameters_callback(
-      const std::vector<rclcpp::Parameter>& parameters);
-
   void declare_parameters();
   void cache_parameters();
   void timer_callback();
@@ -32,7 +28,7 @@ class BaseTeleopNode : public rclcpp::Node {
   // State
   geometry_msgs::msg::Twist current_twist_;
   geometry_msgs::msg::Twist target_twist_;
-  bool joy_mode_active_ = false; // Binary state: True = Drive, False = Stop/Lock
+  bool joy_mode_active_ = false;
 
   // Cached parameters (axis indices)
   int axis_forward_backward_ = 1;
@@ -40,8 +36,8 @@ class BaseTeleopNode : public rclcpp::Node {
   int axis_yaw_ = 2;
   int axis_deadman_translation_ = 5;
   int axis_deadman_rotation_ = 4;
-  int button_software_stop_ = 15; // Touchpad Click
-  int button_joy_mode_on_ = 8;    // Create (Select)
+  int button_software_stop_ = 15;
+  int button_joy_mode_on_ = 8;
 
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;
@@ -52,8 +48,6 @@ class BaseTeleopNode : public rclcpp::Node {
   std::string topic_joy_;
   std::string topic_cmd_vel_;
   std::string topic_stop_lock_;
-
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 
 }  // namespace base_teleop

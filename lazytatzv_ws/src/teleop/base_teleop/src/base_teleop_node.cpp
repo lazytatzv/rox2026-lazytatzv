@@ -25,10 +25,8 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
 
-  parameter_callback_handle_ = this->add_on_set_parameters_callback(
-      std::bind(&BaseTeleopNode::on_set_parameters_callback, this, std::placeholders::_1));
-
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode [BINARY-MODE] initialized");
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized: joy='%s' cmd_vel='%s'", 
+    topic_joy_.c_str(), topic_cmd_vel_.c_str());
 }
 
 void BaseTeleopNode::declare_parameters() {
@@ -91,35 +89,31 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr ms
   size_t required_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
   if (msg->buttons.size() <= required_buttons) return;
 
-  // --- 1. STOP (Touchpad) ---
+  // 1. STOP (Touchpad)
   static bool last_stop_state = false;
-  bool current_stop_state = (msg->buttons[button_software_stop_] == 1);
-  if (current_stop_state && !last_stop_state) {
-    joy_mode_active_ = false; // Disable Drive
+  if (msg->buttons[button_software_stop_] == 1 && !last_stop_state) {
+    joy_mode_active_ = false;
     auto lock = std::make_unique<std_msgs::msg::Bool>();
     lock->data = true;
     publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_WARN(get_logger(), "SYSTEM LOCKED / STOP MODE [Press SELECT to Arm]");
+    RCLCPP_WARN(get_logger(), "SYSTEM LOCKED");
   }
-  last_stop_state = current_stop_state;
+  last_stop_state = (msg->buttons[button_software_stop_] == 1);
 
-  // --- 2. JOY (Select) ---
+  // 2. JOY (Select)
   static bool last_joy_state = false;
-  bool current_joy_state = (msg->buttons[button_joy_mode_on_] == 1);
-  if (current_joy_state && !last_joy_state) {
-    joy_mode_active_ = true; // Enable Drive
+  if (msg->buttons[button_joy_mode_on_] == 1 && !last_joy_state) {
+    joy_mode_active_ = true;
     auto lock = std::make_unique<std_msgs::msg::Bool>();
     lock->data = false;
     publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_INFO(get_logger(), "SYSTEM ARMED / JOY MODE ACTIVE");
+    RCLCPP_INFO(get_logger(), "SYSTEM ARMED");
   }
-  last_joy_state = current_joy_state;
+  last_joy_state = (msg->buttons[button_joy_mode_on_] == 1);
 
-  // --- 3. PROCESSING ---
+  // 3. PROCESSING
   if (!joy_mode_active_) {
-    target_twist_.linear.x = 0.0;
-    target_twist_.linear.y = 0.0;
-    target_twist_.angular.z = 0.0;
+    target_twist_.linear.x = 0.0; target_twist_.linear.y = 0.0; target_twist_.angular.z = 0.0;
     return;
   }
 
@@ -134,20 +128,6 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr ms
   target_twist_.linear.x = deadman ? (msg->axes[axis_forward_backward_] * scale_linear_velocity_) : 0.0;
   target_twist_.linear.y = deadman ? (msg->axes[axis_left_right_] * scale_linear_velocity_) : 0.0;
   target_twist_.angular.z = deadman ? (msg->axes[axis_yaw_] * scale_angular_velocity_) : 0.0;
-}
-
-rcl_interfaces::msg::SetParametersResult BaseTeleopNode::on_set_parameters_callback(
-    const std::vector<rclcpp::Parameter>& parameters) {
-  for (const auto& param : parameters) {
-    if (param.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER && param.as_int() < 0) {
-      rcl_interfaces::msg::SetParametersResult result;
-      result.successful = false;
-      result.reason = "Index must be >= 0";
-      return result;
-    }
-  }
-  cache_parameters();
-  return rcl_interfaces::msg::SetParametersResult();
 }
 
 }  // namespace base_teleop
