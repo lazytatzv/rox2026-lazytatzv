@@ -14,7 +14,7 @@ services:
     environment:
       ROS_DOMAIN_ID: "0"
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/src/robot_bringup/config/fastdds_config.xml
+      FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/src/bringup/robot_bringup/config/fastdds_config.xml
       DEBIAN_FRONTEND: noninteractive
       # GUI Support
       DISPLAY: ${DISPLAY:-:0}
@@ -25,7 +25,7 @@ services:
       - net.core.rmem_default=2147483647
 
     volumes:
-      - ./lazytatzv_ws:/root/lazytatzv_ws
+      - .:/root/lazytatzv_ws
       - ./.ccache:/root/.ccache:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:rw

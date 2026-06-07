@@ -1,4 +1,3 @@
-// Copyright 2026 Tatsukiyano
 #include "mecanum_kinematics/wheel_speeds_dispatcher.hpp"
 
 #include <algorithm>
@@ -10,8 +9,7 @@
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 
-namespace mecanum_kinematics
-{
+namespace mecanum_kinematics {
 
 WheelSpeedsDispatcher::WheelSpeedsDispatcher(const rclcpp::NodeOptions & options)
 : rclcpp_lifecycle::LifecycleNode("wheel_speeds_dispatcher", options)
@@ -35,19 +33,17 @@ WheelSpeedsDispatcher::on_configure(const rclcpp_lifecycle::State &)
   rear_left_topic_ = this->get_parameter("rear_left_topic").as_string();
   rear_right_topic_ = this->get_parameter("rear_right_topic").as_string();
 
+  auto command_qos = rclcpp::QoS(1).best_effort();
+
   subscription_ = this->create_subscription<robot_interfaces::msg::WheelSpeeds>(
     "wheel_speeds",
     rclcpp::SystemDefaultsQoS(),
     std::bind(&WheelSpeedsDispatcher::wheel_speeds_callback, this, std::placeholders::_1));
 
-  pub_fl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_left_topic_,
-      rclcpp::SystemDefaultsQoS());
-  pub_fr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_right_topic_,
-      rclcpp::SystemDefaultsQoS());
-  pub_rl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_left_topic_,
-      rclcpp::SystemDefaultsQoS());
-  pub_rr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_right_topic_,
-      rclcpp::SystemDefaultsQoS());
+  pub_fl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_left_topic_, command_qos);
+  pub_fr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_right_topic_, command_qos);
+  pub_rl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_left_topic_, command_qos);
+  pub_rr_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(rear_right_topic_, command_qos);
 
   RCLCPP_INFO(get_logger(), "Configured");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -96,16 +92,14 @@ WheelSpeedsDispatcher::on_shutdown(const rclcpp_lifecycle::State &)
 void WheelSpeedsDispatcher::wheel_speeds_callback(
   const robot_interfaces::msg::WheelSpeeds::SharedPtr msg)
 {
-  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {return;}
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
 
-  auto publish_vec =
-    [](const rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr & pub,
-    double velocity) {
-      auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
-      out->data.push_back(velocity);
-      out->data.push_back(1.0); // Dummy current limit
-      pub->publish(std::move(out));
-    };
+  auto publish_vec = [](const rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr & pub, double velocity) {
+    auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
+    out->data.push_back(velocity);
+    out->data.push_back(1.0); // Dummy current limit
+    pub->publish(std::move(out));
+  };
 
   publish_vec(pub_fl_, msg->front_left_velocity);
   publish_vec(pub_fr_, msg->front_right_velocity);

@@ -15,7 +15,7 @@
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
   <exec_depend>mecanum_kinematics</exec_depend>
-  <exec_depend>at_motor_driver</exec_depend>
+  <exec_depend>robstride_driver</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
