@@ -34,10 +34,8 @@ class BaseTeleopNode : public rclcpp::Node {
   int axis_forward_backward_ = 1;
   int axis_left_right_ = 0;
   int axis_yaw_ = 2;
-  int axis_deadman_translation_ = 5;
-  int axis_deadman_rotation_ = 4;
-  int button_software_stop_ = 15;
-  int button_joy_mode_on_ = 8;
+  int button_software_stop_ = 15; // Touchpad Click
+  int button_joy_mode_on_ = 8;    // Select (Create)
 
   // Cached parameters (scaling)
   double scale_linear_velocity_ = 1.0;

@@ -4,18 +4,23 @@
     deadzone: 0.1
     autorepeat_rate: 20.0
 
-/base_teleoperation_node:
+/base_teleop:
   ros__parameters:
+    # Axis Mappings
     joy_axis_forward_backward: 1
     joy_axis_left_right: 0
     joy_axis_yaw: 2
-    joy_axis_deadman_translation: 5
-    joy_axis_deadman_rotation: 4
-    joy_button_software_stop: 15
-    joy_button_joy_mode_on: 8
+    
+    # Button Mappings (DualSense)
+    joy_button_software_stop: 15  # Touchpad Click
+    joy_button_joy_mode_on: 8     # Create (Select)
+    
+    # Sensitivities
     scale_linear_velocity: 1.0
     scale_angular_velocity: 1.0
     smoothing_factor: 0.3
+    
+    # Topics
     topic_joy: "joy"
     topic_cmd_vel: "cmd_vel"
     topic_stop_lock: "stop_lock"

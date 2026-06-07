@@ -25,16 +25,13 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized: joy='%s' cmd_vel='%s'", 
-    topic_joy_.c_str(), topic_cmd_vel_.c_str());
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode [究極シンプル] 起動成功");
 }
 
 void BaseTeleopNode::declare_parameters() {
   this->declare_parameter("joy_axis_forward_backward", 1);
   this->declare_parameter("joy_axis_left_right", 0);
   this->declare_parameter("joy_axis_yaw", 2);
-  this->declare_parameter("joy_axis_deadman_translation", 5);
-  this->declare_parameter("joy_axis_deadman_rotation", 4);
   this->declare_parameter("joy_button_software_stop", 15);
   this->declare_parameter("joy_button_joy_mode_on", 8);
   this->declare_parameter("scale_linear_velocity", 1.0);
@@ -49,8 +46,6 @@ void BaseTeleopNode::cache_parameters() {
   axis_forward_backward_ = this->get_parameter("joy_axis_forward_backward").as_int();
   axis_left_right_ = this->get_parameter("joy_axis_left_right").as_int();
   axis_yaw_ = this->get_parameter("joy_axis_yaw").as_int();
-  axis_deadman_translation_ = this->get_parameter("joy_axis_deadman_translation").as_int();
-  axis_deadman_rotation_ = this->get_parameter("joy_axis_deadman_rotation").as_int();
   button_software_stop_ = this->get_parameter("joy_button_software_stop").as_int();
   button_joy_mode_on_ = this->get_parameter("joy_button_joy_mode_on").as_int();
   scale_linear_velocity_ = this->get_parameter("scale_linear_velocity").as_double();
@@ -86,48 +81,44 @@ void BaseTeleopNode::timer_callback() {
 }
 
 void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg) {
-  size_t required_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
-  if (msg->buttons.size() <= required_buttons) return;
+  size_t req_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
+  if (msg->buttons.size() <= req_buttons) return;
 
-  // 1. STOP (Touchpad)
+  // --- 1. STOP (Touchpad) ---
   static bool last_stop_state = false;
   if (msg->buttons[button_software_stop_] == 1 && !last_stop_state) {
     joy_mode_active_ = false;
     auto lock = std::make_unique<std_msgs::msg::Bool>();
     lock->data = true;
     publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_WARN(get_logger(), "SYSTEM LOCKED");
+    RCLCPP_WARN(get_logger(), "SYSTEM LOCKED / DISARMED");
   }
   last_stop_state = (msg->buttons[button_software_stop_] == 1);
 
-  // 2. JOY (Select)
+  // --- 2. JOY (Select) ---
   static bool last_joy_state = false;
   if (msg->buttons[button_joy_mode_on_] == 1 && !last_joy_state) {
     joy_mode_active_ = true;
     auto lock = std::make_unique<std_msgs::msg::Bool>();
     lock->data = false;
     publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_INFO(get_logger(), "SYSTEM ARMED");
+    RCLCPP_INFO(get_logger(), "SYSTEM ARMED / JOY MODE ACTIVE");
   }
   last_joy_state = (msg->buttons[button_joy_mode_on_] == 1);
 
-  // 3. PROCESSING
+  // --- 3. PROCESSING ---
   if (!joy_mode_active_) {
     target_twist_.linear.x = 0.0; target_twist_.linear.y = 0.0; target_twist_.angular.z = 0.0;
     return;
   }
 
-  size_t required_axes = static_cast<size_t>(std::max({
-      axis_forward_backward_, axis_left_right_, axis_yaw_, 
-      axis_deadman_translation_, axis_deadman_rotation_}));
-  if (msg->axes.size() <= required_axes) return;
+  size_t req_axes = static_cast<size_t>(std::max({axis_forward_backward_, axis_left_right_, axis_yaw_}));
+  if (msg->axes.size() <= req_axes) return;
 
-  bool deadman = (std::abs(msg->axes[axis_deadman_translation_]) > 0.5 || 
-                  std::abs(msg->axes[axis_deadman_rotation_]) > 0.5);
-
-  target_twist_.linear.x = deadman ? (msg->axes[axis_forward_backward_] * scale_linear_velocity_) : 0.0;
-  target_twist_.linear.y = deadman ? (msg->axes[axis_left_right_] * scale_linear_velocity_) : 0.0;
-  target_twist_.angular.z = deadman ? (msg->axes[axis_yaw_] * scale_angular_velocity_) : 0.0;
+  // 常にスティック入力を反映（デッドマン廃止）
+  target_twist_.linear.x = msg->axes[axis_forward_backward_] * scale_linear_velocity_;
+  target_twist_.linear.y = msg->axes[axis_left_right_] * scale_linear_velocity_;
+  target_twist_.angular.z = msg->axes[axis_yaw_] * scale_angular_velocity_;
 }
 
 }  // namespace base_teleop
