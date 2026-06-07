@@ -2,16 +2,13 @@
 ARG ROS_DISTRO=jazzy
 FROM ros:${ROS_DISTRO}-ros-base
 
+# Use bash
 SHELL ["/bin/bash", "-c"]
 
-# Environment Configuration
-ENV DEBIAN_FRONTEND=noninteractive
-ENV WORKSPACE=/root/lazytatzv_ws
-ENV CCACHE_DIR=/root/.ccache
-WORKDIR $WORKSPACE
-
-# 1. Install System Utilities, Linter Tools, and ccache
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# --- 1. Infrastructure & Mirror Optimization ---
+# Switch to JP mirror for lightning fast downloads and install core tools
+RUN sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git python3-colcon-common-extensions \
     python3-pip python3-rosdep python3-vcstool \
     evtest libboost-all-dev ccache \
@@ -20,7 +17,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     black \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Layer Optimization: Install dependencies first
+# --- 2. Environment Configuration (Stable Layer) ---
+ENV DEBIAN_FRONTEND=noninteractive
+ENV WORKSPACE=/root/lazytatzv_ws
+ENV CCACHE_DIR=/root/.ccache
+WORKDIR $WORKSPACE
+
+# --- 3. Dependency Layer (rosdep) ---
+# Copy ONLY package.xml files first to cache dependencies separately from code
 COPY ./src /tmp/src
 RUN apt-get update && \
     rosdep update --include-eol-distros && \
@@ -28,16 +32,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/src
 
-# 3. Setup ccache for colcon
-RUN ln -s /usr/bin/ccache /usr/local/bin/gcc && \
-    ln -s /usr/bin/ccache /usr/local/bin/g++ && \
-    ln -s /usr/bin/ccache /usr/local/bin/cc && \
-    ln -s /usr/bin/ccache /usr/local/bin/c++
+# --- 4. Development Tools Setup ---
+RUN ln -sf /usr/bin/ccache /usr/local/bin/gcc && \
+    ln -sf /usr/bin/ccache /usr/local/bin/g++ && \
+    ln -sf /usr/bin/ccache /usr/local/bin/cc && \
+    ln -sf /usr/bin/ccache /usr/local/bin/c++
 
-# 4. Copy actual source code
+# --- 5. Source Code Layer ---
 COPY ./src ./src
 
-# Enhanced shell environment
+# Final env setup
 RUN printf "%s\n" \
     "source /opt/ros/${ROS_DISTRO}/setup.bash" \
     "if [ -f $WORKSPACE/install/setup.bash ]; then source $WORKSPACE/install/setup.bash; fi" \
