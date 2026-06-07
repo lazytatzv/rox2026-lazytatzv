@@ -3,13 +3,20 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
 def launch_setup(context, *args, **kwargs):
+    # --- 1. SETTINGS & PATHS ---
     pkg_bringup = get_package_share_directory("robot_bringup")
+
+    # Launch Configurations
+    use_foxglove = LaunchConfiguration("use_foxglove")
+    use_rviz = LaunchConfiguration("use_rviz")
 
     paths = {
         "phys": os.path.join(pkg_bringup, "config", "physical.yaml"),
@@ -19,32 +26,24 @@ def launch_setup(context, *args, **kwargs):
         "urdf": os.path.join(pkg_bringup, "urdf", "robot.urdf"),
     }
 
-    # 1. Load actuator type
+    # Load actuator type
     with open(paths["phys"], "r") as f:
         phys_params = (
             yaml.safe_load(f).get("/kinematics_engine_node", {}).get("ros__parameters", {})
         )
         actuator_type = phys_params.get("actuator_type", "at")
 
-    # 2. Build DYNAMIC managed nodes list
+    # Build managed nodes list
     dynamic_managed_nodes = []
-
     if actuator_type in ["at", "ddsm"]:
         dynamic_managed_nodes.append("/communication/serial_gateway")
-        dynamic_managed_nodes += [
-            f"/motors/{side}" for side in ["front_left", "front_right", "rear_left", "rear_right"]
-        ]
     elif actuator_type == "can":
         dynamic_managed_nodes.append("/communication/usb_can_analyzer")
-        dynamic_managed_nodes += [
-            f"/motors/{side}" for side in ["front_left", "front_right", "rear_left", "rear_right"]
-        ]
-    elif actuator_type == "virtual":
-        dynamic_managed_nodes += [
-            f"/motors/{side}" for side in ["front_left", "front_right", "rear_left", "rear_right"]
-        ]
 
-    # 3. Load USER nodes and Merge
+    for side in ["front_left", "front_right", "rear_left", "rear_right"]:
+        dynamic_managed_nodes.append(f"/motors/{side}")
+
+    # Load USER nodes and Merge
     with open(paths["life"], "r") as f:
         life_config = yaml.safe_load(f)
     user_nodes = (
@@ -56,7 +55,7 @@ def launch_setup(context, *args, **kwargs):
 
     print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
-    # 4. Determine Plugin/Package
+    # --- Setup Actuator Config ---
     if actuator_type == "at":
         m_pkg, m_plugin = "robstride_driver", "robstride_driver::RobstrideAtNode"
         act_yaml = os.path.join(pkg_bringup, "config", "actuators_robstride.yaml")
@@ -68,11 +67,9 @@ def launch_setup(context, *args, **kwargs):
         act_yaml = os.path.join(pkg_bringup, "config", "actuators_ddsm.yaml")
     elif actuator_type == "virtual":
         m_pkg, m_plugin = "virtual_actuator", "virtual_actuator::VirtualActuatorNode"
-        act_yaml = os.path.join(
-            pkg_bringup, "config", "actuators_robstride.yaml"
-        )  # Reuse joint names
+        act_yaml = os.path.join(pkg_bringup, "config", "actuators_robstride.yaml")
 
-    # --- Composable Nodes ---
+    # --- Composable Nodes (Spinal Cord) ---
     control_nodes = [
         ComposableNode(
             package="mecanum_kinematics",
@@ -110,7 +107,6 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
-    # Add Motors
     for side in ["front_left", "front_right", "rear_left", "rear_right"]:
         control_nodes.append(
             ComposableNode(
@@ -175,9 +171,26 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
         ),
-        Node(package="foxglove_bridge", executable="foxglove_bridge_node", name="foxglove_bridge"),
+        # Optional Visualization
+        Node(
+            package="foxglove_bridge",
+            executable="foxglove_bridge_node",
+            name="foxglove_bridge",
+            condition=IfCondition(use_foxglove),
+        ),
+        Node(
+            package="rviz2", executable="rviz2", name="rviz2", condition=IfCondition(use_rviz)
+        ),
     ]
 
 
 def generate_launch_description():
-    return LaunchDescription([OpaqueFunction(function=launch_setup)])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_foxglove", default_value="true", description="Launch Foxglove Bridge"
+            ),
+            DeclareLaunchArgument("use_rviz", default_value="false", description="Launch RViz2"),
+            OpaqueFunction(function=launch_setup),
+        ]
+    )
